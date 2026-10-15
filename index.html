@@ -1,0 +1,2544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>COUNCIL3 // Triad Orchestrator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+  :root{ --glass-bg:rgba(10,8,20,0.40); --glass-bd:rgba(255,255,255,0.08); }
+  *{ -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; overflow:hidden; background:#05030c; }
+  body{ font-family:'Inter',system-ui,sans-serif; color:#e9e6fb; overscroll-behavior:none; }
+  .orbit{ font-family:'Orbitron',sans-serif; }
+  .mono{ font-family:'JetBrains Mono',ui-monospace,monospace; }
+
+  /* ---------- BACKGROUND STACK ---------- */
+  #bgc,#fx{ position:fixed; inset:0; width:100%; height:100%; display:block; pointer-events:none; }
+  #bgc{ z-index:0; opacity:0; transition:opacity 1.4s ease; }
+  #bgc.ready{ opacity:1; }
+  #tint{
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:
+      radial-gradient(140% 95% at 50% 30%, rgba(5,3,12,0) 46%, rgba(5,3,12,.38) 80%, rgba(5,3,12,.72) 100%),
+      linear-gradient(180deg, rgba(6,4,14,.42) 0%, rgba(6,4,14,0) 11%, rgba(6,4,14,0) 58%, rgba(6,4,14,.55) 84%, rgba(6,4,14,.82) 100%);
+  }
+  #fx{ z-index:2; mix-blend-mode:screen; }
+
+  /* ---------- GLASS ---------- */
+  .glass{
+    background:var(--glass-bg);
+    -webkit-backdrop-filter:blur(12px) saturate(180%);
+    backdrop-filter:blur(12px) saturate(180%);
+    border:1px solid var(--glass-bd);
+    box-shadow:0 30px 80px -40px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .hair{ border-color:rgba(255,255,255,0.07); }
+  .ghost{
+    background:transparent; border:1px solid rgba(255,255,255,.09); color:#efeaff; outline:none; width:100%;
+    transition:border-color .3s ease, background .3s ease;
+  }
+  .ghost:focus{ border-color:rgba(216,190,255,.42); background:rgba(255,255,255,.03); }
+  .ghost::placeholder{ color:rgba(210,200,240,.3); }
+  select.ghost{ appearance:none; -webkit-appearance:none; cursor:pointer; }
+  select.ghost option{ background:#0b0718; color:#e9e6fb; }
+  .bare{ background:transparent; border:none; outline:none; color:#efeaff; width:100%; }
+  .bare::placeholder{ color:rgba(210,200,240,.32); }
+  .pill{ transition:all .35s cubic-bezier(.2,.8,.2,1); }
+  .pill:hover{ border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.07); }
+  .label{ font-size:9px; letter-spacing:.32em; text-transform:uppercase; }
+  .dot{ width:7px; height:7px; border-radius:99px; transition:all .6s ease; display:inline-block; }
+
+  /* ---------- ROUTE RAILS ---------- */
+  .rail{ position:relative; height:1px; background:rgba(255,255,255,.12); overflow:hidden; }
+  .rail > i{
+    position:absolute; inset:0; transform-origin:left; transform:scaleX(0);
+    transition:transform 1.1s cubic-bezier(.2,.8,.2,1), background .8s ease, box-shadow .8s ease;
+  }
+  .deity{ opacity:.45; transition:opacity .7s ease; }
+  .deity.is-ranked{ opacity:.82; }
+  .deity.is-live{ opacity:1; }
+  .deity.is-live .rail > i{ animation:railPulse 1.15s ease-in-out infinite; }
+  @keyframes railPulse{ 0%,100%{ opacity:.5; } 50%{ opacity:1; } }
+  .swap{ animation:swapIn .55s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes swapIn{ from{ opacity:0; transform:translateY(5px); } to{ opacity:1; transform:none; } }
+
+  /* ---------- FORGE ---------- */
+  #forgeBtn{
+    background:linear-gradient(100deg,#5b21b6 0%,#a855f7 34%,#e879f9 52%,#6366f1 100%);
+    background-size:240% 100%; animation:pan 7s ease infinite;
+    box-shadow:0 0 0 1px rgba(233,213,255,.32) inset, 0 16px 44px -18px rgba(168,85,247,.9);
+    transition:filter .3s ease, transform .2s ease;
+  }
+  @keyframes pan{ 0%,100%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } }
+  #forgeBtn:hover{ filter:brightness(1.14); }
+  #forgeBtn:active{ transform:translateY(1px); }
+  #forgeBtn[data-busy="1"]{ background:linear-gradient(100deg,#3b0d1f,#7f1d4d,#3b0d1f); animation:none; }
+
+  /* ---------- TICKER ---------- */
+  #ticker{ min-height:18px; }
+  #ticker .line{ animation:lineIn .5s cubic-bezier(.2,.8,.2,1) both; text-shadow:0 1px 10px rgba(0,0,0,.95); }
+  @keyframes lineIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+  .caret::after{
+    content:''; display:inline-block; width:6px; height:12px; margin-left:3px; vertical-align:-1px;
+    background:rgba(233,213,255,.85); animation:blink 1s steps(2) infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  /* ---------- DRAWERS ---------- */
+  #tray{
+    transform:translateY(-14px); opacity:0; pointer-events:none;
+    transition:transform .6s cubic-bezier(.2,.8,.2,1), opacity .45s ease;
+    max-height:calc(100vh - 72px); overflow-y:auto;
+  }
+  #tray.open{ transform:none; opacity:1; pointer-events:auto; }
+  #tray::-webkit-scrollbar{ width:6px; }
+  #tray::-webkit-scrollbar-thumb{ background:rgba(168,85,247,.3); border-radius:6px; }
+  .adv{ max-height:0; overflow:hidden; opacity:0; transition:max-height .5s ease, opacity .4s ease; }
+  .adv.open{ max-height:120px; opacity:1; }
+
+  #sandbox{
+    transform:translateY(102%); opacity:0; pointer-events:none;
+    transition:transform .7s cubic-bezier(.2,.85,.2,1), opacity .5s ease;
+  }
+  #sandbox.open{ transform:none; opacity:1; pointer-events:auto; }
+  #codeWrap{ transition:max-height .6s cubic-bezier(.2,.85,.2,1), opacity .4s ease; max-height:34vh; overflow:hidden; }
+  #codeWrap.folded{ max-height:0; opacity:0; }
+  #editor{
+    font-family:'JetBrains Mono',monospace; font-size:12px; line-height:19px;
+    background:transparent; color:#d8d3f5; resize:none; outline:none; white-space:pre; overflow:auto;
+    caret-color:#c084fc; tab-size:2;
+  }
+  #editor::-webkit-scrollbar,#consoleBody::-webkit-scrollbar{ width:8px; height:8px; }
+  #editor::-webkit-scrollbar-thumb,#consoleBody::-webkit-scrollbar-thumb{ background:rgba(168,85,247,.32); border-radius:8px; }
+  #consoleBody{ font-family:'JetBrains Mono',monospace; font-size:10.5px; line-height:16px; overflow:auto; }
+  .switch{ width:34px; height:18px; border-radius:99px; background:rgba(255,255,255,.14); position:relative; cursor:pointer; transition:background .35s ease; flex:none; }
+  .switch::after{ content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:99px; background:rgba(235,230,255,.6); transition:transform .35s cubic-bezier(.2,.8,.2,1), background .35s ease; }
+  .switch[data-on="1"]{ background:rgba(168,85,247,.55); }
+  .switch[data-on="1"]::after{ transform:translateX(16px); background:#f5eaff; }
+
+  #intake{ transition:opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1); }
+  #intake.gone{ opacity:0; transform:translate(-50%,-10px); pointer-events:none; }
+  #dropVeil{ opacity:0; pointer-events:none; transition:opacity .3s ease; }
+  #dropVeil.on{ opacity:1; }
+  #pinHint{ opacity:0; transition:opacity .4s ease; }
+  #pinHint.show{ opacity:1; }
+  .fadeUp{ animation:fadeUp .9s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:none; } }
+  .noSel{ user-select:none; }
+
+  /* ---------- CLOUD TRAY + CREATIONS ---------- */
+  .panelDrawer{
+    transform:translateY(-14px); opacity:0; pointer-events:none;
+    transition:transform .6s cubic-bezier(.2,.8,.2,1), opacity .45s ease;
+    max-height:calc(100vh - 72px); overflow-y:auto;
+  }
+  .panelDrawer.open{ transform:none; opacity:1; pointer-events:auto; }
+  .panelDrawer::-webkit-scrollbar{ width:6px; }
+  .panelDrawer::-webkit-scrollbar-thumb{ background:rgba(168,85,247,.3); border-radius:6px; }
+
+  .led{
+    width:8px; height:8px; border-radius:99px; display:inline-block; flex:none;
+    background:#ef4444; box-shadow:0 0 9px rgba(239,68,68,.85);
+    transition:background .45s ease, box-shadow .45s ease;
+  }
+  .led[data-s="live"]{ background:#22c55e; box-shadow:0 0 12px rgba(34,197,94,.95); animation:ledPulse 2.1s ease-in-out infinite; }
+  .led[data-s="busy"]{ background:#fcd34d; box-shadow:0 0 11px rgba(252,211,77,.9); animation:ledPulse .9s ease-in-out infinite; }
+  .led[data-s="off"]{ background:#ef4444; box-shadow:0 0 9px rgba(239,68,68,.8); }
+  @keyframes ledPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+
+  .fold{ max-height:0; overflow:hidden; opacity:0; transition:max-height .55s cubic-bezier(.2,.85,.2,1), opacity .4s ease; }
+  .fold.open{ max-height:620px; opacity:1; }
+
+  .dirRow{
+    transition:background .3s ease, border-color .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);
+    animation:lineIn .45s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .dirRow:hover{ background:rgba(255,255,255,.05); border-color:rgba(216,190,255,.32); transform:translateX(2px); }
+
+  #creations{
+    transform:translateY(102%); opacity:0; pointer-events:none;
+    transition:transform .7s cubic-bezier(.2,.85,.2,1), opacity .5s ease;
+  }
+  #creations.open{ transform:none; opacity:1; pointer-events:auto; }
+  #creationGrid::-webkit-scrollbar{ width:8px; }
+  #creationGrid::-webkit-scrollbar-thumb{ background:rgba(168,85,247,.3); border-radius:8px; }
+  .card{
+    transition:transform .45s cubic-bezier(.2,.8,.2,1), border-color .45s ease, box-shadow .45s ease;
+    animation:fadeUp .5s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .card:hover{ transform:translateY(-4px); border-color:rgba(216,190,255,.3); box-shadow:0 22px 50px -26px rgba(168,85,247,.7); }
+  .cardArt{ height:76px; border-radius:10px; position:relative; overflow:hidden; }
+  .cardArt::after{
+    content:''; position:absolute; inset:0;
+    background:repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 1px, transparent 1px 7px);
+    mix-blend-mode:overlay;
+  }
+  .lane{ font-size:8.5px; letter-spacing:.2em; padding:2px 6px; border-radius:99px; border:1px solid currentColor; }
+  .qbar{ height:3px; border-radius:99px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .qbar > i{ display:block; height:100%; border-radius:99px; transition:width .8s cubic-bezier(.2,.8,.2,1); }
+</style>
+</head>
+<body>
+
+<canvas id="bgc"></canvas>
+<div id="tint"></div>
+<canvas id="fx"></canvas>
+
+<!-- ============ TOP NAV ============ -->
+<header class="fixed top-0 left-0 right-0 z-40 h-12 flex items-center px-5 sm:px-7 noSel">
+  <div class="flex items-center gap-2.5">
+    <svg width="15" height="15" viewBox="0 0 40 40">
+      <defs><linearGradient id="lgA" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#ffd7a1"/><stop offset="52%" stop-color="#c084fc"/><stop offset="100%" stop-color="#818cf8"/>
+      </linearGradient></defs>
+      <path d="M20 4 L35 33 L27.5 33 L20 18.5 L12.5 33 L5 33 Z" fill="url(#lgA)"/>
+    </svg>
+    <span class="orbit text-[11px] font-medium tracking-[.34em] text-[#f2eeff]/90">COUNCIL3</span>
+    <span class="text-[10px] text-[#c9c2ea]/40 mono">//</span>
+    <span class="label text-[#c9c2ea]/55 hidden sm:block">Triad Orchestrator</span>
+  </div>
+  <div class="ml-auto flex items-center gap-4">
+    <div class="flex items-center gap-3" id="navDots"></div>
+    <div class="w-px h-4 bg-white/10"></div>
+    <button id="trayBtn" class="pill glass rounded-full px-3 py-1.5 flex items-center gap-2 text-[9px] orbit tracking-[.24em] text-[#ddd6fb]/80">
+      <i data-lucide="key-round" class="w-3 h-3"></i><span class="hidden sm:inline">API MATRIX</span>
+    </button>
+    <button id="cloudBtn" class="pill glass rounded-full px-3 py-1.5 flex items-center gap-2 text-[9px] orbit tracking-[.24em] text-[#ddd6fb]/80">
+      <span id="cloudLed" class="led" data-s="off"></span><span class="hidden sm:inline">CLOUD</span>
+    </button>
+    <button id="creationsBtn" class="pill glass rounded-full px-3 py-1.5 flex items-center gap-2 text-[9px] orbit tracking-[.24em] text-[#ddd6fb]/80">
+      <i data-lucide="library" class="w-3 h-3"></i><span class="hidden sm:inline">CREATIONS</span>
+      <span id="creationCount" class="mono text-[9px] text-[#c9c2ea]/45">0</span>
+    </button>
+    <button id="sandboxBtn" class="pill glass rounded-full px-3 py-1.5 flex items-center gap-2 text-[9px] orbit tracking-[.24em] text-[#ddd6fb]/80">
+      <i data-lucide="monitor-play" class="w-3 h-3"></i><span class="hidden sm:inline">SANDBOX</span>
+    </button>
+  </div>
+</header>
+
+<!-- ============ ARTWORK INTAKE (shown only if the artwork file is missing) ============ -->
+<div id="intake" class="gone glass fixed z-40 top-16 left-1/2 -translate-x-1/2 rounded-full pl-4 pr-1.5 py-1.5 flex items-center gap-3 max-w-[94vw]">
+  <i data-lucide="image" class="w-3.5 h-3.5 text-[#e9d5ff] shrink-0"></i>
+  <span class="text-[11px] text-[#ddd6fb]/80 leading-snug">Drop the Council3 artwork anywhere, or save it as <span class="mono text-[#f0abfc]">council3-bg.jpg</span> beside index.html</span>
+  <button id="intakeBtn" class="pill rounded-full border border-white/15 px-3 py-1.5 text-[9px] orbit tracking-[.2em] text-white shrink-0">CHOOSE</button>
+</div>
+<input type="file" id="artFile" accept="image/*" class="hidden">
+<div id="dropVeil" class="fixed inset-0 z-[60] grid place-items-center" style="background:rgba(8,5,18,.55);backdrop-filter:blur(6px)">
+  <div class="orbit text-[12px] tracking-[.4em] text-[#f0ebff]">RELEASE TO BIND ARTWORK</div>
+</div>
+
+<!-- ============ API MATRIX TRAY ============ -->
+<section id="tray" class="glass fixed z-40 top-14 right-3 sm:right-7 w-[calc(100vw-24px)] sm:w-[400px] rounded-2xl px-5 py-4">
+  <div class="flex items-center justify-between pb-3 border-b hair">
+    <span class="label text-[#cfc7f2]/60">API Matrix · any provider</span>
+    <button id="trayClose" class="text-[#cfc7f2]/40 hover:text-white transition"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+  </div>
+  <div id="trayRows"></div>
+  <div class="mt-3 pt-3 border-t hair flex items-center gap-2 flex-wrap">
+    <button id="artBtn" class="pill rounded-full px-3 py-1.5 border border-white/10 text-[9px] orbit tracking-[.2em] text-[#ddd6fb]/70 flex items-center gap-2">
+      <i data-lucide="image-up" class="w-3 h-3"></i>ARTWORK
+    </button>
+    <button id="pinBtn" class="pill rounded-full px-3 py-1.5 border border-white/10 text-[9px] orbit tracking-[.2em] text-[#ddd6fb]/70 flex items-center gap-2">
+      <i data-lucide="crosshair" class="w-3 h-3"></i>PIN
+    </button>
+    <button id="veilBtn" class="pill rounded-full px-3 py-1.5 border border-white/10 text-[9px] orbit tracking-[.2em] text-[#ddd6fb]/70 flex items-center gap-2">
+      <i data-lucide="layers" class="w-3 h-3"></i><span>BAKED UI: SOFT</span>
+    </button>
+    <button id="resetBg" class="pill rounded-full px-3 py-1.5 border border-white/10 text-[9px] orbit tracking-[.2em] text-[#ddd6fb]/50 flex items-center gap-2">
+      <i data-lucide="rotate-ccw" class="w-3 h-3"></i>RESET
+    </button>
+  </div>
+  <p class="mt-3 text-[10px] leading-relaxed text-[#c9c2ea]/38">
+    Paste any key, the full chat endpoint URL and the model id your provider expects. Requests use the standard
+    <span class="mono">messages</span> chat schema. Slots without an endpoint run in simulation. Keys are stored only in this browser.
+  </p>
+</section>
+
+<!-- ============ CLOUD PERSISTENCE TRAY ============ -->
+<section id="cloudTray" class="panelDrawer glass fixed z-40 top-14 right-3 sm:right-7 w-[calc(100vw-24px)] sm:w-[420px] rounded-2xl px-5 py-4">
+  <div class="flex items-center gap-2.5 pb-3 border-b hair">
+    <span id="cloudLed2" class="led" data-s="off"></span>
+    <span class="label text-[#cfc7f2]/60">Cloud Persistence</span>
+    <span id="cloudState" class="ml-auto mono text-[9.5px] text-[#fca5a5]">disconnected</span>
+    <button id="cloudClose" class="text-[#cfc7f2]/40 hover:text-white transition ml-2"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+  </div>
+
+  <div class="pt-3">
+    <div class="flex items-center justify-between">
+      <span class="label text-[#cfc7f2]/45">Database configuration</span>
+      <button id="cfgFold" class="pill rounded-full border border-white/10 px-2.5 py-1 text-[9px] orbit tracking-[.18em] text-[#ddd6fb]/55">EDIT</button>
+    </div>
+    <div id="cfgBody" class="fold">
+      <input id="sbUrl" type="url" spellcheck="false" autocomplete="off" placeholder="Supabase Project URL · https://xxxx.supabase.co" class="ghost mt-2.5 rounded-lg px-3 py-2 text-[11px] mono">
+      <input id="sbKey" type="password" spellcheck="false" autocomplete="off" placeholder="Anon public key" class="ghost mt-2 rounded-lg px-3 py-2 text-[11px] mono">
+      <div class="mt-2 flex gap-2">
+        <button id="sbInit" class="pill rounded-lg border border-white/15 px-3 py-2 text-[9px] orbit tracking-[.2em] text-white/85 flex-1">INITIALIZE</button>
+        <button id="sbShow" class="pill rounded-lg border border-white/10 px-3 py-2 text-[9px] orbit tracking-[.2em] text-[#ddd6fb]/55">SHOW</button>
+        <button id="sbForget" class="pill rounded-lg border border-white/10 px-3 py-2 text-[9px] orbit tracking-[.2em] text-[#ddd6fb]/55">FORGET</button>
+      </div>
+      <button id="schemaFold" class="mt-2 text-[9.5px] mono text-[#c9c2ea]/40 hover:text-[#d8b4fe] transition">› required table schema</button>
+      <div id="schemaBody" class="fold">
+        <pre id="schemaSql" class="mono text-[9.5px] leading-[15px] text-[#9be89b]/70 mt-2 p-3 rounded-lg overflow-x-auto" style="background:rgba(4,2,10,.6);border:1px solid rgba(255,255,255,.06)"></pre>
+        <button id="copySchema" class="pill rounded-full border border-white/10 px-2.5 py-1 mt-2 text-[9px] orbit tracking-[.18em] text-[#ddd6fb]/55">COPY SQL</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-3 pt-3 border-t hair">
+    <span class="label text-[#cfc7f2]/45">Master device passphrase</span>
+    <div class="mt-2 flex gap-2">
+      <input id="sbPass" type="password" spellcheck="false" autocomplete="off" placeholder="Any phrase you can remember" class="ghost rounded-lg px-3 py-2 text-[11px] mono flex-1 min-w-0">
+      <button id="passShow" class="pill rounded-lg border border-white/10 px-3 py-2 text-[9px] orbit tracking-[.2em] text-[#ddd6fb]/55 shrink-0">SHOW</button>
+    </div>
+    <div class="mt-2 flex items-center gap-2">
+      <span class="mono text-[9px] text-[#c9c2ea]/40">cluster</span>
+      <span id="clusterOut" class="mono text-[9.5px] text-[#d8b4fe]/80 truncate">—</span>
+      <label class="ml-auto flex items-center gap-2 cursor-pointer">
+        <span class="label text-[#c9c2ea]/45">AUTO</span>
+        <span class="switch" id="autoSync" data-on="1"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="mt-3 pt-3 border-t hair grid grid-cols-2 gap-2">
+    <button id="pushBtn" class="pill rounded-lg border border-emerald-300/25 px-3 py-2.5 text-[9px] orbit tracking-[.18em] text-[#86efac]/90 flex items-center justify-center gap-2">
+      <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i>SYNC TO CLOUD
+    </button>
+    <button id="pullBtn" class="pill rounded-lg border border-indigo-300/25 px-3 py-2.5 text-[9px] orbit tracking-[.18em] text-[#a5b4fc]/90 flex items-center justify-center gap-2">
+      <i data-lucide="cloud-download" class="w-3.5 h-3.5"></i>PULL FROM CLOUD
+    </button>
+  </div>
+
+  <div class="mt-3 pt-3 border-t hair">
+    <div class="flex items-center">
+      <span class="label text-[#cfc7f2]/45">Cloud directory</span>
+      <span id="dirCount" class="ml-auto mono text-[9px] text-[#c9c2ea]/40">0 records</span>
+    </div>
+    <div id="cloudDirectory" class="mt-2 space-y-1.5 max-h-[220px] overflow-y-auto"></div>
+  </div>
+
+  <p class="mt-3 text-[10px] leading-relaxed text-[#c9c2ea]/35">
+    The passphrase is hashed locally into an alphanumeric cluster id — only the hash ever reaches the database. Any device that
+    enters the same phrase resolves to the same cluster and sees the same projects.
+  </p>
+</section>
+
+<!-- ============ PREVIOUS CREATIONS ============ -->
+<section id="creations" class="glass fixed z-50 left-0 right-0 bottom-0 rounded-t-3xl overflow-hidden flex flex-col" style="height:88vh">
+  <div class="flex items-center gap-3 px-4 sm:px-5 py-3 border-b hair noSel">
+    <i data-lucide="library" class="w-3.5 h-3.5 text-[#d8b4fe]"></i>
+    <span class="label text-[#d9d2fa]/75">Previous creations</span>
+    <span id="creationMeta" class="mono text-[10px] text-[#c9c2ea]/40">0 local</span>
+    <div class="ml-auto flex items-center gap-2">
+      <input id="creationSearch" type="text" spellcheck="false" placeholder="Filter…" class="ghost rounded-full px-3 py-1.5 text-[10.5px] mono w-[140px] sm:w-[200px]">
+      <select id="creationSort" class="ghost rounded-full px-3 py-1.5 text-[10px] orbit tracking-[.14em] text-[#ddd6fb]/80 w-auto">
+        <option value="recent">NEWEST</option>
+        <option value="score">BEST SCORE</option>
+        <option value="name">NAME</option>
+      </select>
+      <button id="creationsPull" class="pill rounded-full border border-white/10 px-3 py-1.5 text-[10px] orbit tracking-[.16em] text-[#ddd6fb]/70 flex items-center gap-2"><i data-lucide="cloud-download" class="w-3 h-3"></i><span class="hidden sm:inline">PULL</span></button>
+      <button id="creationsPush" class="pill rounded-full border border-white/10 px-3 py-1.5 text-[10px] orbit tracking-[.16em] text-[#ddd6fb]/70 flex items-center gap-2"><i data-lucide="cloud-upload" class="w-3 h-3"></i><span class="hidden sm:inline">SYNC ALL</span></button>
+      <button id="creationsClose" class="pill rounded-full border border-white/10 px-3 py-1.5 text-[#ddd6fb]/70"><i data-lucide="x" class="w-3 h-3"></i></button>
+    </div>
+  </div>
+  <div id="creationGrid" class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 grid gap-3 sm:gap-4" style="grid-template-columns:repeat(auto-fill,minmax(246px,1fr));align-content:start"></div>
+</section>
+
+<!-- ============ CENTER TERMINAL ============ -->
+<main class="fixed inset-0 z-30 flex flex-col justify-end pointer-events-none">
+  <div class="w-full px-3 sm:px-7 pb-5 sm:pb-8 flex justify-center">
+    <div class="w-full max-w-[820px] pointer-events-auto fadeUp">
+      <div id="ticker" class="mono text-[10.5px] sm:text-[11px] leading-[18px] px-1 mb-2.5 space-y-[3px]"></div>
+
+      <div id="terminal" class="glass rounded-2xl px-5 sm:px-6 pt-4 pb-4">
+        <div class="flex items-center gap-2.5">
+          <i data-lucide="triangle" class="w-3 h-3 text-[#c084fc]"></i>
+          <span class="orbit text-[10px] tracking-[.3em] text-[#f0ebff]/85">COMMAND THE TRIAD</span>
+          <button id="readyChip" class="ml-auto rounded-full pl-2.5 pr-3.5 py-1 border border-emerald-300/25 flex items-center gap-2 opacity-0 translate-y-1 pointer-events-none transition-all duration-500 hover:bg-white/5">
+            <span class="dot" style="background:#4ade80;box-shadow:0 0 10px #4ade80"></span>
+            <span class="label text-[#86efac]/85">Payload ready</span>
+          </button>
+          <span id="phaseOut" class="label text-[#c9c2ea]/45 ml-auto">Idle</span>
+        </div>
+
+        <textarea id="prompt" rows="1" spellcheck="false"
+          class="bare mt-3 text-[13.5px] sm:text-[14.5px] leading-[26px] font-light max-h-[190px] resize-none"
+          placeholder="Describe the game or mod you want the triad to forge"></textarea>
+
+        <div class="mt-3 pt-3 border-t hair flex items-center gap-4 flex-wrap">
+          <button id="forgeBtn" class="rounded-full px-6 py-2.5 orbit text-[10.5px] font-bold tracking-[.28em] text-white flex items-center gap-2.5">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i><span id="forgeLabel">INITIATE FORGING</span>
+          </button>
+          <div id="rails" class="flex-1 min-w-[250px] flex flex-col gap-[7px]"></div>
+        </div>
+
+        <div class="mt-3 flex items-center gap-2 flex-wrap" id="presets"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ SANDBOX ============ -->
+<section id="sandbox" class="glass fixed z-50 left-0 right-0 bottom-0 rounded-t-3xl overflow-hidden flex flex-col" style="height:90vh">
+  <div class="flex items-center gap-3 px-4 sm:px-5 py-3 border-b hair noSel">
+    <i data-lucide="monitor-play" class="w-3.5 h-3.5 text-[#86efac]"></i>
+    <span class="label text-[#d9d2fa]/75 hidden sm:inline">Live execution sandbox</span>
+    <span id="reloadOut" class="mono text-[10px] text-[#c9c2ea]/40">cold</span>
+    <div class="ml-auto flex items-center gap-2">
+      <select id="artifactSel" class="ghost rounded-full px-3 py-1.5 text-[10px] orbit tracking-[.16em] text-[#ddd6fb]/80 w-auto">
+        <option value="game">GAME SHELL</option>
+        <option value="mod">MOD HARNESS</option>
+      </select>
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10">
+        <span class="label text-[#c9c2ea]/45 hidden sm:inline">HOT</span>
+        <div class="switch" id="hotSwitch" data-on="1"></div>
+      </div>
+      <button id="codeToggle" class="pill rounded-full border border-white/10 px-3 py-1.5 text-[10px] orbit tracking-[.16em] text-[#ddd6fb]/70 flex items-center gap-2"><i data-lucide="code-2" class="w-3 h-3"></i><span class="hidden sm:inline">CODE</span></button>
+      <button id="exportBtn" class="pill rounded-full border border-white/10 px-3 py-1.5 text-[#ddd6fb]/70"><i data-lucide="download" class="w-3 h-3"></i></button>
+      <button id="sandboxClose" class="pill rounded-full border border-white/10 px-3 py-1.5 text-[#ddd6fb]/70"><i data-lucide="x" class="w-3 h-3"></i></button>
+    </div>
+  </div>
+  <div class="flex-1 min-h-0 relative" style="background:#07050f">
+    <iframe id="preview" title="Council3 live sandbox" class="absolute inset-0 w-full h-full" sandbox="allow-scripts allow-pointer-lock"></iframe>
+  </div>
+  <div id="consoleBody" class="h-[64px] px-5 py-2 border-t hair text-[#b9f0c4]/70"></div>
+  <div id="codeWrap" class="folded border-t hair">
+    <div class="flex items-center gap-3 px-5 py-2 border-b hair">
+      <span id="fileName" class="mono text-[10.5px] text-[#c9c2ea]/60">construct.html</span>
+      <span id="locOut" class="mono text-[10px] text-[#c9c2ea]/30">0 lines</span>
+      <button id="runBtn" class="ml-auto pill rounded-full border border-white/10 px-3 py-1 text-[10px] orbit tracking-[.16em] text-[#ddd6fb]/70">RUN</button>
+    </div>
+    <textarea id="editor" spellcheck="false" class="w-full h-[28vh] px-5 py-3"></textarea>
+  </div>
+</section>
+
+<div id="pinHint" class="fixed z-50 left-1/2 -translate-x-1/2 top-16 glass rounded-full px-4 py-2 label text-[#f0ebff]/85 pointer-events-none">
+  Click the artwork to pin <span id="pinTarget">SOLAR</span> · Esc to cancel
+</div>
+
+<script>
+/* ==============================================================================
+   COUNCIL3 STORAGE MODULE
+   Cross-device project persistence over a free Supabase instance.
+   Exposes: window.Council3Storage  ·  window.Council3Workspace
+   ============================================================================== */
+(function(root){
+'use strict';
+
+const TABLE = 'council3_projects';
+const LS_CFG   = 'council3.cloud.cfg.v1';
+const LS_PASS  = 'council3.cloud.pass.v1';
+const LS_LOCAL = 'council3.creations.v1';
+const MAX_LOCAL = 48;
+const MAX_CODE = 320000;
+
+const SCHEMA_SQL = [
+  '-- run once in the Supabase SQL editor',
+  'create table if not exists council3_projects (',
+  '  cluster     text        not null,',
+  '  project_id  text        not null,',
+  '  name        text,',
+  '  prompt      text,',
+  '  code        text,',
+  '  pipeline    jsonb       default \'[]\'::jsonb,',
+  '  meta        jsonb       default \'{}\'::jsonb,',
+  '  score       int         default 0,',
+  '  updated_at  timestamptz default now(),',
+  '  primary key (cluster, project_id)',
+  ');',
+  '',
+  'alter table council3_projects enable row level security;',
+  '',
+  'create policy "council3 cluster access"',
+  '  on council3_projects for all',
+  '  using (true) with check (true);'
+].join('\n');
+
+/* ---------------------------------------------------------------
+   GLOBAL WORKSPACE MEMORY OBJECT
+   --------------------------------------------------------------- */
+const Workspace = root.Council3Workspace = root.Council3Workspace || {
+  currentProjectId:null,
+  currentProjectName:'',
+  currentCodePayload:'',
+  currentPipeline:[],
+  currentPrompt:'',
+  currentScore:0,
+  currentMeta:{},
+  history:[],
+  _listeners:[],
+  onInject:function(fn){ if(typeof fn === 'function') this._listeners.push(fn); return this; },
+  _emit:function(rec){
+    for(let i = 0; i < this._listeners.length; i++){
+      try{ this._listeners[i](rec); }
+      catch(err){ console.warn('Council3 inject listener failed', err); }
+    }
+  }
+};
+
+/* ---------------------------------------------------------------
+   INTERNAL STATE
+   --------------------------------------------------------------- */
+const S = {
+  client:null,
+  url:'',
+  anon:'',
+  passphrase:'',
+  cluster:'',
+  status:'off',
+  statusText:'disconnected',
+  directory:[],
+  local:[],
+  autoSync:true,
+  statusHooks:[],
+  dirHooks:[],
+  localHooks:[],
+  logHook:null
+};
+
+function log(msg, tone){ if(S.logHook) S.logHook(msg, tone); }
+function emitStatus(){ S.statusHooks.forEach(function(f){ try{ f(S.status, S.statusText); }catch(e){} }); }
+function emitDir(){ S.dirHooks.forEach(function(f){ try{ f(S.directory.slice()); }catch(e){} }); }
+function emitLocal(){ S.localHooks.forEach(function(f){ try{ f(S.local.slice()); }catch(e){} }); }
+function setStatus(st, text){
+  S.status = st; S.statusText = text;
+  emitStatus();
+}
+
+/* ---------------------------------------------------------------
+   CREDENTIAL CACHE
+   --------------------------------------------------------------- */
+function cacheCredentials(url, anon){
+  try{ localStorage.setItem(LS_CFG, JSON.stringify({ url:url, anon:anon, at:Date.now() })); }
+  catch(err){ log('credential cache unavailable in this browser', 'warn'); }
+}
+function readCachedCredentials(){
+  try{
+    const raw = localStorage.getItem(LS_CFG);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    if(d && typeof d.url === 'string' && typeof d.anon === 'string') return d;
+    return null;
+  }catch(err){ return null; }
+}
+function forgetCredentials(){
+  try{ localStorage.removeItem(LS_CFG); localStorage.removeItem(LS_PASS); }catch(err){}
+  S.client = null; S.url = ''; S.anon = ''; S.passphrase = ''; S.cluster = '';
+  S.directory = [];
+  emitDir();
+  setStatus('off', 'disconnected');
+}
+function cachePassphrase(pass){
+  try{ localStorage.setItem(LS_PASS, btoa(unescape(encodeURIComponent(pass)))); }catch(err){}
+}
+function readCachedPassphrase(){
+  try{
+    const raw = localStorage.getItem(LS_PASS);
+    if(!raw) return '';
+    return decodeURIComponent(escape(atob(raw)));
+  }catch(err){ return ''; }
+}
+
+/* ---------------------------------------------------------------
+   PASSPHRASE -> ALPHANUMERIC CLUSTER HASH
+   --------------------------------------------------------------- */
+async function hashPassphrase(pass){
+  const salted = 'council3::v1::' + String(pass || '').trim().toLowerCase();
+  if(root.crypto && root.crypto.subtle && root.crypto.subtle.digest && root.TextEncoder){
+    try{
+      const buf = await root.crypto.subtle.digest('SHA-256', new TextEncoder().encode(salted));
+      const bytes = new Uint8Array(buf);
+      let hex = '';
+      for(let i = 0; i < bytes.length; i++){
+        const h = bytes[i].toString(16);
+        hex += h.length === 1 ? '0' + h : h;
+      }
+      return 'c3' + hex.slice(0, 30);
+    }catch(err){ /* fall through to deterministic fallback */ }
+  }
+  let h1 = 0x811c9dc5, h2 = 0x01000193, h3 = 0xdeadbeef, h4 = 0x9e3779b9;
+  for(let i = 0; i < salted.length; i++){
+    const c = salted.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
+    h2 = Math.imul(h2 + c + i, 2246822519) >>> 0;
+    h3 = Math.imul(h3 ^ (c + i * 7), 3266489917) >>> 0;
+    h4 = Math.imul(h4 + Math.imul(c, i + 1), 668265263) >>> 0;
+  }
+  const parts = [h1, h2, h3, h4].map(function(h){
+    let s = h.toString(16);
+    while(s.length < 8) s = '0' + s;
+    return s;
+  });
+  return 'c3' + parts.join('').slice(0, 30);
+}
+
+async function setPassphrase(pass, silent){
+  const clean = String(pass || '').trim();
+  S.passphrase = clean;
+  if(clean.length < 4){
+    S.cluster = '';
+    if(S.client) setStatus('off', 'passphrase too short');
+    return '';
+  }
+  S.cluster = await hashPassphrase(clean);
+  cachePassphrase(clean);
+  if(S.client) setStatus('live', 'cluster resolved');
+  if(!silent) log('cluster resolved · ' + S.cluster.slice(0, 12) + '…', 'ok');
+  return S.cluster;
+}
+
+/* ---------------------------------------------------------------
+   INITIALIZATION
+   --------------------------------------------------------------- */
+function libReady(){ return !!(root.supabase && typeof root.supabase.createClient === 'function'); }
+
+async function init(url, anon, opts){
+  const o = opts || {};
+  const u = String(url || '').trim().replace(/\/+$/, '');
+  const k = String(anon || '').trim();
+  if(!/^https?:\/\/.+/i.test(u)) throw new Error('project URL must start with https://');
+  if(k.length < 20) throw new Error('anon key looks too short');
+  if(!libReady()) throw new Error('supabase client library has not loaded');
+
+  setStatus('busy', 'connecting');
+  const client = root.supabase.createClient(u, k, {
+    auth:{ persistSession:false, autoRefreshToken:false },
+    global:{ headers:{ 'x-council3':'triad-orchestrator' } }
+  });
+
+  const probe = await client.from(TABLE).select('project_id').limit(1);
+  if(probe.error){
+    setStatus('off', 'table unreachable');
+    const m = probe.error.message || 'unknown error';
+    if(/does not exist|schema cache|relation/i.test(m)) throw new Error('table "' + TABLE + '" not found — run the schema SQL first');
+    throw new Error(m);
+  }
+
+  S.client = client; S.url = u; S.anon = k;
+  cacheCredentials(u, k);
+  setStatus(S.cluster ? 'live' : 'live', S.cluster ? 'live cloud link' : 'linked · awaiting passphrase');
+  if(!o.silent) log('cloud link established · ' + TABLE + ' reachable', 'ok');
+  return true;
+}
+
+async function autoInit(){
+  const cached = readCachedCredentials();
+  const pass = readCachedPassphrase();
+  if(pass) await setPassphrase(pass, true);
+  if(!cached) return false;
+  let tries = 0;
+  while(!libReady() && tries < 40){ await new Promise(function(r){ setTimeout(r, 120); }); tries++; }
+  if(!libReady()){ setStatus('off', 'client library blocked'); return false; }
+  try{
+    await init(cached.url, cached.anon, { silent:true });
+    log('cached cloud credentials restored', 'ok');
+    if(S.cluster) await pullFromCloud({ silent:true });
+    return true;
+  }catch(err){
+    setStatus('off', 'reconnect failed');
+    log('cloud reconnect failed · ' + err.message, 'bad');
+    return false;
+  }
+}
+
+function requireLink(){
+  if(!S.client) throw new Error('cloud link is not initialized');
+  if(!S.cluster) throw new Error('enter a master device passphrase first');
+}
+
+/* ---------------------------------------------------------------
+   RECORD SHAPING
+   --------------------------------------------------------------- */
+function makeId(){
+  return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+function normalize(rec){
+  const r = rec || {};
+  const code = typeof r.code === 'string' ? r.code : '';
+  return {
+    project_id: r.project_id || r.id || makeId(),
+    name: String(r.name || 'Untitled construct').slice(0, 160),
+    prompt: String(r.prompt || '').slice(0, 8000),
+    code: code.length > MAX_CODE ? code.slice(0, MAX_CODE) : code,
+    pipeline: Array.isArray(r.pipeline) ? r.pipeline : [],
+    meta: r.meta && typeof r.meta === 'object' ? r.meta : {},
+    score: Math.max(0, Math.min(100, parseInt(r.score, 10) || 0)),
+    updated_at: r.updated_at || new Date().toISOString()
+  };
+}
+function toRow(rec){
+  const n = normalize(rec);
+  return {
+    cluster: S.cluster,
+    project_id: n.project_id,
+    name: n.name,
+    prompt: n.prompt,
+    code: n.code,
+    pipeline: n.pipeline,
+    meta: n.meta,
+    score: n.score,
+    updated_at: new Date().toISOString()
+  };
+}
+
+/* ---------------------------------------------------------------
+   LOCAL MIRROR
+   --------------------------------------------------------------- */
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(LS_LOCAL);
+    S.local = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(S.local)) S.local = [];
+  }catch(err){ S.local = []; }
+  emitLocal();
+  return S.local.slice();
+}
+function persistLocal(){
+  const attempt = function(list){
+    localStorage.setItem(LS_LOCAL, JSON.stringify(list));
+  };
+  try{ attempt(S.local); }
+  catch(err){
+    let list = S.local.slice(0, Math.max(6, Math.floor(S.local.length / 2)));
+    try{ attempt(list); S.local = list; log('local library pruned to fit storage quota', 'warn'); }
+    catch(err2){
+      list = S.local.slice(0, 4).map(function(r){ return Object.assign({}, r, { code:r.code.slice(0, 40000) }); });
+      try{ attempt(list); S.local = list; log('local library heavily pruned', 'warn'); }
+      catch(err3){ log('local library could not be written', 'bad'); }
+    }
+  }
+  emitLocal();
+}
+function recordCreation(rec){
+  const n = normalize(rec);
+  const i = S.local.findIndex(function(r){ return r.project_id === n.project_id; });
+  if(i > -1) S.local[i] = n; else S.local.unshift(n);
+  S.local.sort(function(a, b){ return (b.updated_at || '').localeCompare(a.updated_at || ''); });
+  if(S.local.length > MAX_LOCAL) S.local.length = MAX_LOCAL;
+  persistLocal();
+  Workspace.history = S.local.slice();
+  if(S.autoSync && S.client && S.cluster){
+    syncToCloud([n], { silent:true }).catch(function(err){ log('auto-sync deferred · ' + err.message, 'warn'); });
+  }
+  return n;
+}
+function deleteLocal(projectId){
+  S.local = S.local.filter(function(r){ return r.project_id !== projectId; });
+  persistLocal();
+}
+function getLocal(){ return S.local.slice(); }
+function findRecord(projectId){
+  return S.local.filter(function(r){ return r.project_id === projectId; })[0] ||
+         S.directory.filter(function(r){ return r.project_id === projectId; })[0] || null;
+}
+
+/* ---------------------------------------------------------------
+   ENGINE TRIGGER 1 · SYNC CURRENT STATE TO CLOUD
+   --------------------------------------------------------------- */
+async function syncToCloud(records, opts){
+  const o = opts || {};
+  requireLink();
+  const list = (Array.isArray(records) ? records : [records]).filter(Boolean).map(toRow);
+  if(!list.length) throw new Error('nothing to sync');
+  setStatus('busy', 'pushing ' + list.length + ' record' + (list.length > 1 ? 's' : ''));
+
+  const res = await S.client
+    .from(TABLE)
+    .upsert(list, { onConflict:'cluster,project_id', ignoreDuplicates:false })
+    .select('project_id,name,score,updated_at');
+
+  if(res.error){
+    setStatus('live', 'push failed');
+    throw new Error(res.error.message || 'upsert rejected');
+  }
+  setStatus('live', 'live cloud link');
+  if(!o.silent) log('synced ' + list.length + ' project' + (list.length > 1 ? 's' : '') + ' to cluster ' + S.cluster.slice(0, 10) + '…', 'ok');
+  list.forEach(function(row){
+    const i = S.directory.findIndex(function(r){ return r.project_id === row.project_id; });
+    const slim = normalize(row);
+    if(i > -1) S.directory[i] = slim; else S.directory.unshift(slim);
+  });
+  emitDir();
+  return res.data || [];
+}
+async function syncCurrentState(){
+  if(!Workspace.currentCodePayload && !Workspace.currentPrompt) throw new Error('workspace is empty');
+  const rec = {
+    project_id: Workspace.currentProjectId || makeId(),
+    name: Workspace.currentProjectName || 'Untitled construct',
+    prompt: Workspace.currentPrompt,
+    code: Workspace.currentCodePayload,
+    pipeline: Workspace.currentPipeline,
+    meta: Workspace.currentMeta,
+    score: Workspace.currentScore
+  };
+  Workspace.currentProjectId = rec.project_id;
+  recordCreation(rec);
+  return syncToCloud([rec]);
+}
+async function syncAllLocal(){
+  requireLink();
+  if(!S.local.length) throw new Error('local library is empty');
+  const chunks = [];
+  for(let i = 0; i < S.local.length; i += 8) chunks.push(S.local.slice(i, i + 8));
+  let total = 0;
+  for(let i = 0; i < chunks.length; i++){
+    await syncToCloud(chunks[i], { silent:true });
+    total += chunks[i].length;
+  }
+  log('mirrored ' + total + ' local projects to the cloud', 'ok');
+  return total;
+}
+
+/* ---------------------------------------------------------------
+   ENGINE TRIGGER 2 · PULL FROM CLOUD
+   --------------------------------------------------------------- */
+async function pullFromCloud(opts){
+  const o = opts || {};
+  requireLink();
+  setStatus('busy', 'pulling directory');
+
+  const res = await S.client
+    .from(TABLE)
+    .select('project_id,name,prompt,code,pipeline,meta,score,updated_at')
+    .eq('cluster', S.cluster)
+    .order('updated_at', { ascending:false })
+    .limit(200);
+
+  if(res.error){
+    setStatus('live', 'pull failed');
+    throw new Error(res.error.message || 'select rejected');
+  }
+  S.directory = (res.data || []).map(normalize);
+  emitDir();
+  setStatus('live', 'live cloud link');
+
+  let merged = 0;
+  S.directory.forEach(function(rec){
+    const i = S.local.findIndex(function(r){ return r.project_id === rec.project_id; });
+    if(i === -1){ S.local.push(rec); merged++; }
+    else if((rec.updated_at || '') > (S.local[i].updated_at || '')){ S.local[i] = rec; merged++; }
+  });
+  if(merged){
+    S.local.sort(function(a, b){ return (b.updated_at || '').localeCompare(a.updated_at || ''); });
+    if(S.local.length > MAX_LOCAL) S.local.length = MAX_LOCAL;
+    persistLocal();
+    Workspace.history = S.local.slice();
+  }
+  if(!o.silent) log('pulled ' + S.directory.length + ' cloud record' + (S.directory.length === 1 ? '' : 's') + (merged ? ' · ' + merged + ' merged locally' : ''), 'ok');
+  return S.directory.slice();
+}
+
+async function deleteFromCloud(projectId){
+  requireLink();
+  const res = await S.client.from(TABLE).delete().eq('cluster', S.cluster).eq('project_id', projectId);
+  if(res.error) throw new Error(res.error.message || 'delete rejected');
+  S.directory = S.directory.filter(function(r){ return r.project_id !== projectId; });
+  emitDir();
+  return true;
+}
+async function removeProject(projectId){
+  deleteLocal(projectId);
+  if(S.client && S.cluster){
+    try{ await deleteFromCloud(projectId); }
+    catch(err){ log('cloud delete skipped · ' + err.message, 'warn'); }
+  }
+  return true;
+}
+
+/* ---------------------------------------------------------------
+   STATE INJECTION HOOKS
+   --------------------------------------------------------------- */
+function injectIntoWorkspace(record){
+  const rec = typeof record === 'string' ? findRecord(record) : normalize(record);
+  if(!rec) throw new Error('record not found');
+  Workspace.currentProjectId   = rec.project_id;
+  Workspace.currentProjectName = rec.name;
+  Workspace.currentCodePayload = rec.code;
+  Workspace.currentPipeline    = Array.isArray(rec.pipeline) ? rec.pipeline.slice() : [];
+  Workspace.currentPrompt      = rec.prompt;
+  Workspace.currentScore       = rec.score;
+  Workspace.currentMeta        = rec.meta || {};
+  Workspace._emit(rec);
+  log('injected "' + rec.name + '" into the workspace', 'ok');
+  return rec;
+}
+function captureWorkspace(patch){
+  Object.keys(patch || {}).forEach(function(k){ Workspace[k] = patch[k]; });
+  return Workspace;
+}
+
+/* ---------------------------------------------------------------
+   PUBLIC API
+   --------------------------------------------------------------- */
+const API = {
+  TABLE:TABLE,
+  SCHEMA_SQL:SCHEMA_SQL,
+  init:init,
+  autoInit:autoInit,
+  forgetCredentials:forgetCredentials,
+  readCachedCredentials:readCachedCredentials,
+  readCachedPassphrase:readCachedPassphrase,
+  hashPassphrase:hashPassphrase,
+  setPassphrase:setPassphrase,
+  syncToCloud:syncToCloud,
+  syncCurrentState:syncCurrentState,
+  syncAllLocal:syncAllLocal,
+  pullFromCloud:pullFromCloud,
+  removeProject:removeProject,
+  recordCreation:recordCreation,
+  loadLocal:loadLocal,
+  getLocal:getLocal,
+  getDirectory:function(){ return S.directory.slice(); },
+  findRecord:findRecord,
+  injectIntoWorkspace:injectIntoWorkspace,
+  captureWorkspace:captureWorkspace,
+  makeId:makeId,
+  isLinked:function(){ return !!(S.client && S.cluster); },
+  cluster:function(){ return S.cluster; },
+  status:function(){ return { state:S.status, text:S.statusText }; },
+  setAutoSync:function(v){ S.autoSync = !!v; },
+  onStatus:function(fn){ S.statusHooks.push(fn); fn(S.status, S.statusText); return API; },
+  onDirectory:function(fn){ S.dirHooks.push(fn); fn(S.directory.slice()); return API; },
+  onLocal:function(fn){ S.localHooks.push(fn); fn(S.local.slice()); return API; },
+  onLog:function(fn){ S.logHook = fn; return API; },
+  workspace:Workspace
+};
+
+root.Council3Storage = API;
+if(typeof module !== 'undefined' && module.exports) module.exports = API;
+
+})(typeof window !== 'undefined' ? window : this);
+</script>
+
+<script>
+(function(){
+'use strict';
+
+/* ==========================================================
+   CONFIG
+   ========================================================== */
+const ART_CANDIDATES = [
+  'council3-bg.jpg','council3-bg.png','council3-bg.jpeg','council3-bg.webp',
+  'council3.jpg','council3.png','background.jpg','background.png','bg.jpg','bg.png',
+  'image.png','image.jpg','image.jpeg','image.webp'
+];
+const ART_ASPECT = { w:1000, h:558 };
+const STORE = 'council3.v3';
+const STORE_ART = 'council3.v3.art';
+const ZOOM = 1.075;
+const FOCUS_Y = 0.36;
+const PAR_X = 30, PAR_Y = 18;
+
+const AGENTS = {
+  solar:    { id:'solar',    name:'SOLAR',    accent:'#ff9b45', rgb:[255,155,69],  domain:'Structure · UI scaffolding',
+              anchor:{ u:.152, v:.712 }, w:{ structure:1.00, logic:.55, creative:.72 },
+              system:'You are SOLAR, the structural architect of a three-model council that builds HTML5 games and gameplay mods. You own layout, DOM scaffolding, canvas shell, HUD, screens, menus, input mapping and responsive scaling.' },
+  eldritch: { id:'eldritch', name:'ELDRITCH', accent:'#b06bff', rgb:[176,107,255], domain:'Logic · mechanics · engine',
+              anchor:{ u:.500, v:.448 }, w:{ structure:.58, logic:1.00, creative:.62 },
+              system:'You are ELDRITCH, the logic core of a three-model council that builds HTML5 games and gameplay mods. You own the game loop, fixed timestep, physics, collision, AI behaviour, difficulty math, state machines and engine routing.' },
+  nexus:    { id:'nexus',    name:'NEXUS',    accent:'#7f8cff', rgb:[127,140,255], domain:'Modding · texture · lore · QA',
+              anchor:{ u:.688, v:.43 }, w:{ structure:.70, logic:.58, creative:1.00 },
+              system:'You are NEXUS, the creative and modding specialist of a three-model council that builds HTML5 games and gameplay mods. You own procedural art, palettes, lore, mod hook APIs, runtime script injection, and self-test harnesses.' }
+};
+const IDS = ['solar','eldritch','nexus'];
+const RANKS = ['PRIMARY','SECONDARY','TERTIARY'];
+const ORB = { u:.5, v:.61 };
+
+/* baked UI regions in the artwork (normalized), softened so the live UI replaces them */
+const BAKED = [
+  { x:.312, y:.628, w:.376, h:.345 },
+  { x:.412, y:.004, w:.196, h:.068 }
+];
+
+const LEX = {
+  structure:{ 'ui':2,'layout':2.2,'menu':1.4,'hud':1.8,'screen':1.2,'scaffold':2.4,'framework':2.2,'component':1.6,
+    'responsive':1.7,'css':1.5,'interface':2,'dom':1.5,'grid':1.3,'modal':1.3,'html5':1.4,'boilerplate':2,'wireframe':1.8,
+    'panel':1.1,'shell':1.8,'viewport':1.3,'state machine':1.6,'mobile':1.3 },
+  logic:{ 'physics':2.2,'collision':2.4,'loop':1.8,'game loop':2.8,'math':2.2,'pathfind':2.6,'algorithm':2.4,
+    'bullet':1.9,'delta time':2.2,'spatial hash':2.6,'entity':1.5,'engine':1.8,'ai':1.9,'simulation':2,'tick':1.7,
+    'damage':1.5,'score':1.2,'wave':1.4,'pattern':1.5,'balance':1.6,'difficulty':1.7,'procedural':1.4 },
+  creative:{ 'mod':2.8,'modding':2.9,'texture':2.4,'sprite':2,'art':1.5,'lore':2.6,'story':2.1,'narrative':2.3,
+    'inject':3,'injection':3,'hook':2,'patch':2.1,'skin':1.9,'palette':1.8,'shader':1.7,'audio':1.4,'quest':1.9,'inventory':2,
+    'dialogue':2.1,'atlas':1.9,'cosmetic':1.6,'theme':1.3,'test suite':1.6,'qa':1.4,'harness':1.5 }
+};
+const GENRES = [
+  { re:/bullet[- ]?hell|shmup|danmaku/i, t:'VOID BULLET HELL' },
+  { re:/platform|jump|gravity/i,          t:'ASTRAL PLATFORMER' },
+  { re:/rpg|quest|dungeon/i,              t:'ETHEREAL QUEST' },
+  { re:/inventory|loot|economy/i,         t:'RELIC ECONOMY' },
+  { re:/puzzle|tile|match/i,              t:'SIGIL PUZZLE' },
+  { re:/racing|drift/i,                   t:'NEBULA DRIFT' }
+];
+const PRESETS = [
+  { label:'HTML5 GAME', icon:'gamepad-2', text:'Build an HTML5 bullet-hell game: responsive canvas shell with HUD and title screen, fixed-timestep game loop with circle collision, spiral and ring bullet patterns across escalating waves, particle bursts and a restart state machine.' },
+  { label:'MOD INJECTION', icon:'puzzle', text:'Inject a modding layer into an HTML5 game: expose a hook registry, patch the pickup loop at runtime, add an inventory subsystem with a grid UI, swap the sprite palette procedurally and attach a QA harness that validates every hook.' }
+];
+
+/* ==========================================================
+   STATE
+   ========================================================== */
+function blankSlot(){ return { key:'', endpoint:'', model:'', auth:'bearer', headers:'' }; }
+const state = {
+  agents:{ solar:blankSlot(), eldritch:blankSlot(), nexus:blankSlot() },
+  anchors:{ solar:{u:.152,v:.712}, eldritch:{u:.5,v:.448}, nexus:{u:.688,v:.43} },
+  route:['eldritch','solar','nexus'],
+  stage:null, busy:false, veil:true, hot:true, artifact:'game', aiCode:'',
+  intent:{ genre:'TRIAD CONSTRUCT', raw:'' }
+};
+
+const $ = function(s){ return document.querySelector(s); };
+const $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+const clamp = function(v,a,b){ return v < a ? a : v > b ? b : v; };
+const lerp = function(a,b,t){ return a + (b - a) * t; };
+const pad = function(n){ return n < 10 ? '0' + n : String(n); };
+const rgba = function(rgb,a){ return 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')'; };
+function ts(){ const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+
+const input = $('#prompt');
+const editor = $('#editor');
+const preview = $('#preview');
+
+function save(){
+  try{
+    localStorage.setItem(STORE, JSON.stringify({
+      agents:state.agents, anchors:state.anchors, prompt:input.value, artifact:state.artifact, veil:state.veil
+    }));
+  }catch(e){}
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE); if(!raw) return '';
+    const d = JSON.parse(raw);
+    IDS.forEach(function(id){
+      if(d.agents && d.agents[id]){
+        ['key','endpoint','model','auth','headers'].forEach(function(k){
+          if(typeof d.agents[id][k] === 'string') state.agents[id][k] = d.agents[id][k];
+        });
+      }
+      if(d.anchors && d.anchors[id] && typeof d.anchors[id].u === 'number' && typeof d.anchors[id].v === 'number'){
+        state.anchors[id] = { u:d.anchors[id].u, v:d.anchors[id].v };
+      }
+    });
+    if(d.artifact === 'game' || d.artifact === 'mod') state.artifact = d.artifact;
+    if(typeof d.veil === 'boolean') state.veil = d.veil;
+    return typeof d.prompt === 'string' ? d.prompt : '';
+  }catch(e){ return ''; }
+}
+function slotMode(id){
+  const a = state.agents[id];
+  if(a.key.trim().length >= 8 && /^https?:\/\//i.test(a.endpoint.trim())) return 'live';
+  if(a.key.trim().length >= 8) return 'key';
+  return 'off';
+}
+
+/* ==========================================================
+   TICKER
+   ========================================================== */
+const ticker = $('#ticker');
+let typeTimer = null;
+function fadeTicker(){
+  const kids = Array.prototype.slice.call(ticker.children);
+  kids.forEach(function(k,i){ k.style.opacity = String(0.32 + (i + (4 - kids.length)) * 0.22); });
+}
+function say(text, color){
+  const el = document.createElement('div');
+  el.className = 'line';
+  el.innerHTML = '<span class="text-[#8d85bb]/50">' + ts() + '</span> <span></span>';
+  el.lastChild.style.color = color || '#d8d0f6';
+  el.lastChild.textContent = text;
+  ticker.appendChild(el);
+  while(ticker.childElementCount > 4) ticker.removeChild(ticker.firstChild);
+  fadeTicker();
+}
+function typeOut(text, color){
+  if(typeTimer){ clearInterval(typeTimer); typeTimer = null; }
+  const prev = $('#typeLine');
+  if(prev){ prev.removeAttribute('id'); const c = prev.querySelector('.caret'); if(c){ c.textContent = c.dataset.full; c.classList.remove('caret'); } }
+  const el = document.createElement('div');
+  el.className = 'line'; el.id = 'typeLine';
+  el.innerHTML = '<span class="text-[#8d85bb]/50">' + ts() + '</span> <span class="caret"></span>';
+  const span = el.querySelector('.caret');
+  span.style.color = color || '#e9d5ff';
+  span.dataset.full = text;
+  ticker.appendChild(el);
+  while(ticker.childElementCount > 4) ticker.removeChild(ticker.firstChild);
+  fadeTicker();
+  let i = 0;
+  typeTimer = setInterval(function(){
+    i += 2;
+    span.textContent = text.slice(0, i);
+    if(i >= text.length){ clearInterval(typeTimer); typeTimer = null; span.textContent = text; span.classList.remove('caret'); }
+  }, 16);
+}
+
+/* ==========================================================
+   ARTWORK PIPELINE
+   ========================================================== */
+const bgc = $('#bgc'), bctx = bgc.getContext('2d');
+const fx = $('#fx'), ctx = fx.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+let art = null;
+let rawArt = null;
+let artIsReal = false;
+const view = { ox:0, oy:0, dw:0, dh:0 };
+const mouse = { x:.5, y:.5, sx:.5, sy:.5 };
+
+function processArt(img){
+  const maxW = 2400;
+  const sc = Math.min(1, maxW / img.naturalWidth);
+  const w = Math.round(img.naturalWidth * sc), h = Math.round(img.naturalHeight * sc);
+  const base = document.createElement('canvas');
+  base.width = w; base.height = h;
+  const b = base.getContext('2d');
+  b.imageSmoothingQuality = 'high';
+  b.drawImage(img, 0, 0, w, h);
+  if(state.veil){
+    const soft = document.createElement('canvas');
+    soft.width = w; soft.height = h;
+    const s = soft.getContext('2d');
+    s.filter = 'blur(' + Math.max(6, Math.round(w * 0.011)) + 'px)';
+    s.drawImage(base, 0, 0);
+    s.filter = 'none';
+    s.fillStyle = 'rgba(8,5,18,0.5)';
+    s.fillRect(0, 0, w, h);
+
+    const mask = document.createElement('canvas');
+    mask.width = w; mask.height = h;
+    const m = mask.getContext('2d');
+    const feather = Math.round(w * 0.03);
+    m.shadowColor = 'rgba(0,0,0,1)';
+    m.shadowBlur = feather;
+    m.shadowOffsetX = w * 3;
+    m.fillStyle = '#000';
+    BAKED.forEach(function(r){
+      m.fillRect(r.x * w - w * 3, r.y * h, r.w * w, r.h * h);
+    });
+    s.globalCompositeOperation = 'destination-in';
+    s.drawImage(mask, 0, 0);
+    s.globalCompositeOperation = 'source-over';
+    b.drawImage(soft, 0, 0);
+  }
+  return base;
+}
+
+function fallbackArt(){
+  const w = 1600, h = Math.round(1600 * ART_ASPECT.h / ART_ASPECT.w);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  g.fillStyle = '#06040f'; g.fillRect(0, 0, w, h);
+  function glow(u, v, r, col, a){
+    const x = u * w, y = v * h, rr = r * w;
+    const gr = g.createRadialGradient(x, y, 0, x, y, rr);
+    gr.addColorStop(0, rgba(col, a)); gr.addColorStop(1, rgba(col, 0));
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  }
+  glow(.24, .55, .38, [255,130,50], .38);
+  glow(.5, .36, .34, [160,80,255], .42);
+  glow(.76, .45, .42, [90,90,240], .40);
+  glow(.5, .62, .08, [120,190,255], .55);
+  for(let i = 0; i < 900; i++){
+    const a = Math.random();
+    g.fillStyle = 'rgba(230,225,255,' + (a * a * .9).toFixed(3) + ')';
+    const s = Math.random() < .03 ? 2 : 1;
+    g.fillRect(Math.random() * w, Math.random() * h, s, s);
+  }
+  [[.1,.12,.11],[.08,.4,.045],[.66,.06,.05],[.93,.82,.09],[.07,.83,.045]].forEach(function(p){
+    const x = p[0] * w, y = p[1] * h, r = p[2] * w * .5;
+    const gr = g.createRadialGradient(x - r * .35, y - r * .35, r * .1, x, y, r);
+    gr.addColorStop(0, '#d9d4e6'); gr.addColorStop(.7, '#6f6a80'); gr.addColorStop(1, '#1b1826');
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill();
+  });
+  return c;
+}
+
+function adoptArt(img, label){
+  rawArt = img;
+  art = processArt(img);
+  artIsReal = true;
+  bgc.classList.add('ready');
+  $('#intake').classList.add('gone');
+  if(label) say(label, '#86efac');
+}
+
+function tryCandidates(list, done){
+  if(!list.length){ done(null); return; }
+  const src = list[0];
+  const img = new Image();
+  img.onload = function(){ if(img.naturalWidth > 200) done(img, src); else tryCandidates(list.slice(1), done); };
+  img.onerror = function(){ tryCandidates(list.slice(1), done); };
+  img.src = src;
+}
+
+function bootArt(){
+  art = fallbackArt();
+  artIsReal = false;
+  bgc.classList.add('ready');
+  let stored = null;
+  try{ stored = localStorage.getItem(STORE_ART); }catch(e){}
+  if(stored){
+    const img = new Image();
+    img.onload = function(){ adoptArt(img, null); };
+    img.onerror = function(){ scanFiles(); };
+    img.src = stored;
+    return;
+  }
+  scanFiles();
+}
+function scanFiles(){
+  tryCandidates(ART_CANDIDATES.slice(), function(img, src){
+    if(img){ adoptArt(img, 'Artwork bound from ' + src + '.'); }
+    else{
+      $('#intake').classList.remove('gone');
+      say('Artwork file not found beside index.html — drop the image or save it as council3-bg.jpg.', '#fcd34d');
+    }
+  });
+}
+function ingestFile(file){
+  if(!file || file.type.indexOf('image') !== 0){ say('That file is not an image.', '#fca5a5'); return; }
+  const fr = new FileReader();
+  fr.onload = function(){
+    const img = new Image();
+    img.onload = function(){
+      const maxW = 2200, sc = Math.min(1, maxW / img.naturalWidth);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const data = c.toDataURL('image/jpeg', .9);
+      try{ localStorage.setItem(STORE_ART, data); }
+      catch(e){ say('Artwork too large to persist; it will stay for this session.', '#fcd34d'); }
+      const fin = new Image();
+      fin.onload = function(){ adoptArt(fin, 'Artwork bound and remembered for next visit.'); };
+      fin.src = data;
+    };
+    img.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+
+/* ==========================================================
+   VIEW MAPPING (artwork space <-> screen space)
+   ========================================================== */
+function computeView(){
+  const iw = art ? art.width : ART_ASPECT.w, ih = art ? art.height : ART_ASPECT.h;
+  const s = Math.max(W / iw, H / ih) * ZOOM;
+  const dw = iw * s, dh = ih * s;
+  const px = mouse.sx - .5, py = mouse.sy - .5;
+  view.dw = dw; view.dh = dh;
+  view.ox = clamp((W - dw) * .5 - px * PAR_X, W - dw, 0);
+  view.oy = clamp((H - dh) * FOCUS_Y - py * PAR_Y, H - dh, 0);
+}
+function toScreen(u, v){ return { x:view.ox + u * view.dw, y:view.oy + v * view.dh }; }
+function toArt(x, y){ return { u:(x - view.ox) / view.dw, v:(y - view.oy) / view.dh }; }
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  [bgc, fx].forEach(function(c){ c.width = Math.floor(W * DPR); c.height = Math.floor(H * DPR); });
+  bctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  bctx.imageSmoothingQuality = 'high';
+  buildParticles();
+}
+
+/* ==========================================================
+   FX
+   ========================================================== */
+let dust = [], orbiters = [], streams = [], flare = { solar:0, eldritch:0, nexus:0 }, T = 0;
+
+function buildParticles(){
+  dust = [];
+  const n = Math.round(clamp(W * H / 12000, 60, 170));
+  for(let i = 0; i < n; i++){
+    dust.push({ x:Math.random(), y:Math.random(), z:.25 + Math.random() * 1.6, r:.35 + Math.random() * 1.5,
+      sp:.004 + Math.random() * .02, dr:(Math.random() - .5) * .014, ph:Math.random() * 6.283, hue:Math.random() });
+  }
+  orbiters = [];
+  IDS.forEach(function(id){
+    for(let i = 0; i < 24; i++){
+      orbiters.push({ agent:id, base:.035 + Math.random() * .12, rad:.8 + Math.random() * 2.1,
+        speed:(.14 + Math.random() * .46) * (Math.random() < .5 ? -1 : 1), tilt:Math.random() * Math.PI,
+        squash:.25 + Math.random() * .5, ph:Math.random() * 6.283, tw:.4 + Math.random() * .9 });
+    }
+  });
+}
+
+function dotGlow(x, y, r, rgb, a){
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, rgba(rgb, a));
+  g.addColorStop(.38, rgba(rgb, a * .22));
+  g.addColorStop(1, rgba(rgb, 0));
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+}
+
+function render(dt){
+  mouse.sx = lerp(mouse.sx, mouse.x, .05);
+  mouse.sy = lerp(mouse.sy, mouse.y, .05);
+  computeView();
+  const px = mouse.sx - .5, py = mouse.sy - .5;
+  const unit = view.dh;
+
+  /* artwork */
+  if(art) bctx.drawImage(art, view.ox, view.oy, view.dw, view.dh);
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'lighter';
+
+  /* dust */
+  for(let i = 0; i < dust.length; i++){
+    const d = dust[i];
+    d.y -= d.sp * dt * .05 * d.z;
+    d.x += d.dr * dt * .02;
+    if(d.y < -.04){ d.y = 1.04; d.x = Math.random(); }
+    if(d.x < -.04) d.x = 1.04; else if(d.x > 1.04) d.x = -.04;
+    const x = d.x * W - px * 60 * d.z, y = d.y * H - py * 40 * d.z;
+    const tw = .35 + .65 * Math.sin(T * (1 + d.z * 1.3) + d.ph);
+    const col = d.hue < .34 ? [255,186,128] : d.hue < .7 ? [206,166,255] : [166,182,255];
+    dotGlow(x, y, d.r * (1.4 + d.z) * 4, col, .62 * Math.max(0, tw));
+  }
+
+  /* deities */
+  IDS.forEach(function(id, k){
+    const a = AGENTS[id];
+    const p = toScreen(state.anchors[id].u, state.anchors[id].v);
+    flare[id] = lerp(flare[id], state.stage === id ? 1 : 0, .06);
+    const f = flare[id];
+    const e = .2 + f * .8;
+
+    dotGlow(p.x, p.y, unit * (.22 + f * .14), a.rgb, .13 * e);
+    const breathe = 1 + Math.sin(T * (1.3 + f * 3.6) + k) * .06 * (1 + f);
+    dotGlow(p.x, p.y, unit * .055 * breathe * (1 + f * .5), a.rgb, .55 * e);
+
+    const streak = unit * (.32 + f * .26);
+    const lg = ctx.createLinearGradient(p.x - streak, p.y, p.x + streak, p.y);
+    lg.addColorStop(0, rgba(a.rgb, 0)); lg.addColorStop(.5, rgba(a.rgb, .16 * e)); lg.addColorStop(1, rgba(a.rgb, 0));
+    ctx.fillStyle = lg; ctx.fillRect(p.x - streak, p.y - .75, streak * 2, 1.5);
+    const vs = streak * .45;
+    const lv = ctx.createLinearGradient(p.x, p.y - vs, p.x, p.y + vs);
+    lv.addColorStop(0, rgba(a.rgb, 0)); lv.addColorStop(.5, rgba(a.rgb, .1 * e)); lv.addColorStop(1, rgba(a.rgb, 0));
+    ctx.fillStyle = lv; ctx.fillRect(p.x - .6, p.y - vs, 1.2, vs * 2);
+
+    const gx = p.x + (W * .5 - p.x) * .55, gy = p.y + (H * .5 - p.y) * .55;
+    dotGlow(gx, gy, unit * .02 * (1 + f), a.rgb, .14 * e);
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(T * .07 + k * 2.1);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = rgba(a.rgb, .08 + .4 * f);
+    ctx.beginPath(); ctx.arc(0, 0, unit * .1, 0, 1.4); ctx.stroke();
+    ctx.rotate(2.3);
+    ctx.strokeStyle = rgba(a.rgb, .05 + .3 * f);
+    ctx.beginPath(); ctx.arc(0, 0, unit * .135, 0, .9); ctx.stroke();
+    ctx.restore();
+
+    for(let i = 0; i < orbiters.length; i++){
+      const o = orbiters[i];
+      if(o.agent !== id) continue;
+      const ang = T * o.speed * (1 + f * .9) + o.ph;
+      const rr = o.base * unit * (1 + f * .3);
+      const ex = Math.cos(ang) * rr, ey = Math.sin(ang) * rr * o.squash;
+      const rot = o.tilt + T * .02;
+      const x = p.x + ex * Math.cos(rot) - ey * Math.sin(rot);
+      const y = p.y + ex * Math.sin(rot) + ey * Math.cos(rot);
+      const tw = .3 + .7 * Math.abs(Math.sin(T * o.tw + o.ph));
+      dotGlow(x, y, o.rad * (1 + f * .6) * 5, a.rgb, .8 * tw * (.4 + e * .6));
+    }
+  });
+
+  /* convergence orb */
+  const orb = toScreen(ORB.u, ORB.v);
+  const anyLive = state.stage ? 1 : 0;
+  dotGlow(orb.x, orb.y, unit * (.09 + anyLive * .03 + Math.sin(T * 1.6) * .004), [140,200,255], .12 + anyLive * .1);
+
+  /* handoff streams through the orb */
+  for(let i = streams.length - 1; i >= 0; i--){
+    const s = streams[i];
+    s.t += dt * .00075 * s.speed;
+    if(s.t >= 1){ streams.splice(i, 1); continue; }
+    if(s.t < 0) continue;
+    const A = AGENTS[s.from], B = AGENTS[s.to];
+    const p0 = toScreen(state.anchors[s.from].u, state.anchors[s.from].v);
+    const p1 = toScreen(state.anchors[s.to].u, state.anchors[s.to].v);
+    const t = s.t, it = 1 - t;
+    const e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const ie = 1 - e;
+    const x = ie * ie * p0.x + 2 * ie * e * orb.x + e * e * p1.x + Math.sin(t * 10 + s.ph) * 14;
+    const y = ie * ie * p0.y + 2 * ie * e * orb.y + e * e * p1.y + Math.cos(t * 8 + s.ph) * 10;
+    const col = [ Math.round(A.rgb[0] * it + B.rgb[0] * t), Math.round(A.rgb[1] * it + B.rgb[1] * t), Math.round(A.rgb[2] * it + B.rgb[2] * t) ];
+    dotGlow(x, y, (2 + t * 3) * 6, col, .9);
+    if(s.lead){
+      ctx.strokeStyle = rgba(col, .16 * Math.sin(t * Math.PI));
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.quadraticCurveTo(orb.x, orb.y, p1.x, p1.y); ctx.stroke();
+    }
+  }
+
+  /* cursor well */
+  dotGlow(mouse.sx * W, mouse.sy * H, 150, [196,176,255], .09);
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function emit(from, to, n){
+  for(let i = 0; i < n; i++){
+    streams.push({ from:from, to:to, t:-Math.random() * .25, speed:.8 + Math.random() * .6, ph:Math.random() * 6.283, lead:i === 0 });
+  }
+}
+
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(48, now - last); last = now; T = now * .001;
+  render(dt);
+  requestAnimationFrame(frame);
+}
+
+/* ==========================================================
+   RAILS
+   ========================================================== */
+const railsBox = $('#rails');
+function buildRails(){
+  railsBox.innerHTML = '';
+  for(let r = 0; r < 3; r++){
+    const row = document.createElement('div');
+    row.className = 'deity flex items-center gap-2.5';
+    row.innerHTML =
+      '<span class="mono text-[9px] tracking-[.22em] w-[66px] shrink-0 text-[#c9c2ea]/50">' + RANKS[r] + '</span>' +
+      '<div class="rail flex-1"><i></i></div>' +
+      '<span class="dname orbit text-[9.5px] tracking-[.28em] w-[74px] text-right">—</span>';
+    railsBox.appendChild(row);
+  }
+  paintRails();
+}
+function paintRails(){
+  state.route.forEach(function(id, r){
+    const row = railsBox.children[r];
+    const a = AGENTS[id];
+    const n = row.querySelector('.dname');
+    const fill = row.querySelector('.rail > i');
+    row.classList.add('is-ranked');
+    if(n.textContent !== a.name){ n.textContent = a.name; n.classList.remove('swap'); void n.offsetWidth; n.classList.add('swap'); }
+    n.style.color = a.accent;
+    fill.style.background = 'linear-gradient(90deg,' + rgba(a.rgb,.12) + ',' + a.accent + ')';
+    fill.style.boxShadow = '0 0 12px ' + rgba(a.rgb,.55);
+    fill.style.transform = 'scaleX(' + (1 - r * .2) + ')';
+  });
+}
+function setLive(id){
+  Array.prototype.forEach.call(railsBox.children, function(row, i){ row.classList.toggle('is-live', state.route[i] === id); });
+}
+
+/* ==========================================================
+   API MATRIX
+   ========================================================== */
+function buildTray(){
+  const box = $('#trayRows');
+  box.innerHTML = '';
+  IDS.forEach(function(id){
+    const a = AGENTS[id], cfg = state.agents[id];
+    const row = document.createElement('div');
+    row.className = 'py-3.5 border-b hair';
+    row.dataset.id = id;
+    row.innerHTML =
+      '<div class="flex items-center gap-2.5">' +
+        '<span class="dot" style="background:' + a.accent + ';box-shadow:0 0 9px ' + a.accent + '"></span>' +
+        '<span class="orbit text-[9.5px] tracking-[.26em]" style="color:' + a.accent + '">' + a.name + '</span>' +
+        '<span class="text-[9.5px] text-[#c9c2ea]/40 hidden sm:inline">' + a.domain + '</span>' +
+        '<span data-status class="ml-auto mono text-[9px]"></span>' +
+      '</div>' +
+      '<input data-f="key" type="password" autocomplete="off" spellcheck="false" placeholder="API key" class="ghost mt-2.5 rounded-lg px-3 py-2 text-[11px] mono">' +
+      '<input data-f="endpoint" type="url" autocomplete="off" spellcheck="false" placeholder="Endpoint URL  ·  https://…/chat/completions" class="ghost mt-2 rounded-lg px-3 py-2 text-[11px] mono">' +
+      '<div class="mt-2 flex gap-2">' +
+        '<input data-f="model" type="text" autocomplete="off" spellcheck="false" placeholder="Model id" class="ghost rounded-lg px-3 py-2 text-[11px] mono flex-1 min-w-0">' +
+        '<select data-f="auth" class="ghost rounded-lg px-2.5 py-2 text-[10.5px] mono w-[132px] shrink-0">' +
+          '<option value="bearer">Bearer header</option>' +
+          '<option value="x-api-key">x-api-key header</option>' +
+          '<option value="query">?key= query</option>' +
+          '<option value="none">No auth</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="adv">' +
+        '<input data-f="headers" type="text" autocomplete="off" spellcheck="false" placeholder=\'Extra headers JSON  ·  {"header-name":"value"}\' class="ghost mt-2 rounded-lg px-3 py-2 text-[11px] mono">' +
+      '</div>' +
+      '<div class="mt-2.5 flex items-center gap-2">' +
+        '<button data-act="adv" class="pill rounded-full border border-white/10 px-2.5 py-1 text-[9px] orbit tracking-[.18em] text-[#ddd6fb]/55">ADVANCED</button>' +
+        '<button data-act="show" class="pill rounded-full border border-white/10 px-2.5 py-1 text-[9px] orbit tracking-[.18em] text-[#ddd6fb]/55">SHOW</button>' +
+        '<button data-act="clear" class="pill rounded-full border border-white/10 px-2.5 py-1 text-[9px] orbit tracking-[.18em] text-[#ddd6fb]/55">CLEAR</button>' +
+        '<button data-act="test" class="ml-auto pill rounded-full border border-white/15 px-3 py-1 text-[9px] orbit tracking-[.18em] text-white/85">TEST</button>' +
+      '</div>';
+    box.appendChild(row);
+
+    ['key','endpoint','model','auth','headers'].forEach(function(f){
+      const el = row.querySelector('[data-f="' + f + '"]');
+      el.value = cfg[f];
+      el.addEventListener(f === 'auth' ? 'change' : 'input', function(){
+        state.agents[id][f] = el.value;
+        paintStatus();
+        applyIntent(false);
+        save();
+      });
+    });
+    row.querySelector('[data-act="adv"]').addEventListener('click', function(){ row.querySelector('.adv').classList.toggle('open'); });
+    row.querySelector('[data-act="show"]').addEventListener('click', function(){
+      const k = row.querySelector('[data-f="key"]');
+      k.type = k.type === 'password' ? 'text' : 'password';
+      this.textContent = k.type === 'password' ? 'SHOW' : 'HIDE';
+    });
+    row.querySelector('[data-act="clear"]').addEventListener('click', function(){
+      state.agents[id] = blankSlot();
+      ['key','endpoint','model','headers'].forEach(function(f){ row.querySelector('[data-f="' + f + '"]').value = ''; });
+      row.querySelector('[data-f="auth"]').value = 'bearer';
+      paintStatus(); save();
+      say(a.name + ' slot cleared.', '#cfc7f2');
+    });
+    row.querySelector('[data-act="test"]').addEventListener('click', async function(){
+      if(slotMode(id) !== 'live'){ say(a.name + ' needs a key and an endpoint URL before testing.', '#fcd34d'); return; }
+      const btn = this; btn.textContent = '…';
+      try{
+        const t0 = performance.now();
+        const out = await callModel(id, 'Reply with the single word ONLINE.', 'Status check.', 30000, 16);
+        say(a.name + ' responded in ' + ((performance.now() - t0) / 1000).toFixed(1) + 's :: ' + out.replace(/\s+/g, ' ').slice(0, 60), '#86efac');
+        state.agents[id].verified = true;
+      }catch(err){
+        say(a.name + ' test failed :: ' + err.message, '#fca5a5');
+        state.agents[id].verified = false;
+      }
+      btn.textContent = 'TEST';
+      paintStatus();
+    });
+  });
+  paintStatus();
+}
+function paintStatus(){
+  $$('#trayRows > div').forEach(function(row){
+    const id = row.dataset.id, mode = slotMode(id);
+    const st = row.querySelector('[data-status]');
+    st.textContent = mode === 'live' ? (state.agents[id].verified ? 'live · verified' : 'live') : mode === 'key' ? 'key only · simulated' : 'empty · simulated';
+    st.style.color = mode === 'live' ? '#86efac' : mode === 'key' ? '#fcd34d' : 'rgba(201,194,234,.4)';
+  });
+  const box = $('#navDots');
+  box.innerHTML = '';
+  IDS.forEach(function(id){
+    const a = AGENTS[id], mode = slotMode(id), live = state.stage === id;
+    const col = mode === 'live' ? a.accent : mode === 'key' ? rgba(a.rgb,.5) : 'rgba(255,255,255,.18)';
+    const d = document.createElement('div');
+    d.className = 'flex items-center gap-1.5';
+    d.title = a.name + ' · ' + (mode === 'live' ? 'live endpoint' : mode === 'key' ? 'key stored, no endpoint' : 'empty');
+    d.innerHTML = '<span class="dot" style="background:' + col + ';' + (mode !== 'off' ? 'box-shadow:0 0 ' + (live ? 14 : 8) + 'px ' + a.accent + ';' : '') + (live ? 'transform:scale(1.6);' : '') + '"></span>' +
+      '<span class="label text-[#c9c2ea]/35 hidden lg:inline">' + a.name.slice(0,3) + '</span>';
+    box.appendChild(d);
+  });
+}
+
+/* ==========================================================
+   PROVIDER-NEUTRAL MODEL CALL
+   ========================================================== */
+let runAbort = null;
+function readText(data){
+  if(!data) return '';
+  if(typeof data === 'string') return data;
+  if(data.choices && data.choices[0]){
+    const c = data.choices[0];
+    if(c.message && typeof c.message.content === 'string') return c.message.content;
+    if(c.message && Array.isArray(c.message.content)) return c.message.content.map(function(p){ return p.text || ''; }).join('');
+    if(typeof c.text === 'string') return c.text;
+  }
+  if(Array.isArray(data.content)) return data.content.map(function(p){ return p.text || ''; }).join('');
+  if(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts){
+    return data.candidates[0].content.parts.map(function(p){ return p.text || ''; }).join('');
+  }
+  if(typeof data.output_text === 'string') return data.output_text;
+  if(Array.isArray(data.output)){
+    return data.output.map(function(o){ return Array.isArray(o.content) ? o.content.map(function(p){ return p.text || ''; }).join('') : ''; }).join('');
+  }
+  if(data.message && typeof data.message.content === 'string') return data.message.content;
+  if(typeof data.response === 'string') return data.response;
+  if(typeof data.generated_text === 'string') return data.generated_text;
+  if(Array.isArray(data) && data[0] && typeof data[0].generated_text === 'string') return data[0].generated_text;
+  if(typeof data.text === 'string') return data.text;
+  return '';
+}
+async function callModel(id, system, user, timeout, maxTokens){
+  const cfg = state.agents[id];
+  let url = cfg.endpoint.trim();
+  const headers = { 'Content-Type':'application/json' };
+  if(cfg.auth === 'bearer') headers['Authorization'] = 'Bearer ' + cfg.key.trim();
+  else if(cfg.auth === 'x-api-key') headers['x-api-key'] = cfg.key.trim();
+  else if(cfg.auth === 'query') url += (url.indexOf('?') > -1 ? '&' : '?') + 'key=' + encodeURIComponent(cfg.key.trim());
+  if(cfg.headers.trim()){
+    try{
+      const extra = JSON.parse(cfg.headers);
+      Object.keys(extra).forEach(function(k){ headers[k] = String(extra[k]); });
+    }catch(e){ throw new Error('extra headers are not valid JSON'); }
+  }
+  const body = {
+    messages:[ { role:'system', content:system }, { role:'user', content:user } ],
+    max_tokens:maxTokens || 4096,
+    temperature:.6
+  };
+  if(cfg.model.trim()) body.model = cfg.model.trim();
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(function(){ ctrl.abort(); }, timeout || 120000);
+  const onOuter = function(){ ctrl.abort(); };
+  if(runAbort) runAbort.signal.addEventListener('abort', onOuter);
+  let res;
+  try{
+    res = await fetch(url, { method:'POST', headers:headers, body:JSON.stringify(body), signal:ctrl.signal });
+  }catch(err){
+    clearTimeout(timer);
+    if(err.name === 'AbortError') throw new Error('request aborted or timed out');
+    throw new Error('network or CORS blocked (' + err.message + ')');
+  }
+  clearTimeout(timer);
+  if(runAbort) runAbort.signal.removeEventListener('abort', onOuter);
+  const raw = await res.text();
+  let data = raw;
+  try{ data = JSON.parse(raw); }catch(e){}
+  if(!res.ok){
+    const msg = (data && data.error && (data.error.message || data.error)) || (typeof data === 'string' ? data.slice(0, 140) : res.statusText);
+    throw new Error('HTTP ' + res.status + ' · ' + (typeof msg === 'string' ? msg : JSON.stringify(msg)).slice(0, 160));
+  }
+  const text = readText(data);
+  if(!text) throw new Error('response contained no readable text');
+  return text;
+}
+function extractHtml(text){
+  if(!text) return '';
+  const blocks = [];
+  const re = /```(?:html|HTML)?\s*\n([\s\S]*?)```/g;
+  let m;
+  while((m = re.exec(text)) !== null) blocks.push(m[1]);
+  const best = blocks.filter(function(b){ return /<html|<!doctype|<canvas|<body/i.test(b); }).sort(function(a,b){ return b.length - a.length; })[0];
+  if(best) return best.trim();
+  const start = text.search(/<!doctype html|<html/i);
+  if(start > -1){
+    const end = text.toLowerCase().lastIndexOf('</html>');
+    return text.slice(start, end > start ? end + 7 : text.length).trim();
+  }
+  return '';
+}
+
+/* ==========================================================
+   INTENT ROUTER
+   ========================================================== */
+function parseIntent(text){
+  const raw = (text || '').trim(), low = raw.toLowerCase();
+  const scores = { structure:0, logic:0, creative:0 };
+  Object.keys(LEX).forEach(function(cat){
+    Object.keys(LEX[cat]).forEach(function(term){
+      const re = new RegExp('(^|[^a-z])' + term.replace(/[-]/g, '[- ]?') + '(?:s|es)?(?![a-z])', 'i');
+      if(re.test(low)) scores[cat] += LEX[cat][term];
+    });
+  });
+  const words = low.split(/[^a-z0-9]+/).filter(function(w){ return w.length > 3; }).length;
+  scores.structure += Math.min(2.2, words * .05);
+  scores.logic += Math.min(2.8, words * .065);
+  scores.creative += Math.min(2, words * .042);
+  const ranked = IDS.map(function(id){
+    const w = AGENTS[id].w, mode = slotMode(id);
+    const v = scores.structure * w.structure + scores.logic * w.logic + scores.creative * w.creative + (mode === 'live' ? 1.2 : mode === 'key' ? .4 : 0);
+    return { id:id, v:v };
+  }).sort(function(a,b){ return b.v - a.v; });
+  let genre = 'TRIAD CONSTRUCT';
+  GENRES.forEach(function(g){ if(g.re.test(low)) genre = g.t; });
+  const total = scores.structure + scores.logic + scores.creative;
+  const lead = scores.logic >= scores.structure && scores.logic >= scores.creative ? 'logic' : scores.structure >= scores.creative ? 'structure' : 'creative';
+  return { raw:raw, scores:scores, total:total, lead:lead, order:ranked.map(function(r){ return r.id; }), genre:genre,
+           modding:/\bmods?\b|modding|inject|hook|patch|loader/i.test(low) };
+}
+let tickerDebounce = null;
+function routeLine(order){
+  return 'System route configured: [' + order.map(function(id, i){ return AGENTS[id].name + ' ' + RANKS[i].charAt(0) + RANKS[i].slice(1).toLowerCase(); }).join(' -> ') + ']';
+}
+function applyIntent(announce){
+  const i = parseIntent(input.value);
+  state.intent = i;
+  const changed = i.order.join() !== state.route.join();
+  state.route = i.order;
+  paintRails();
+  if(changed && announce){
+    clearTimeout(tickerDebounce);
+    tickerDebounce = setTimeout(function(){ typeOut(routeLine(i.order), '#e9d5ff'); }, 260);
+  }
+  return i;
+}
+
+/* ==========================================================
+   ARTIFACT TEMPLATES (offline fallback payloads)
+   ========================================================== */
+const BRIDGE = '<script>(function(){function s(l,a){try{parent.postMessage({__c3:1,level:l,text:a.map(function(x){try{return (typeof x==="object"&&x!==null)?JSON.stringify(x):String(x)}catch(e){return String(x)}}).join(" ")},"*")}catch(e){}}["log","warn","error","info"].forEach(function(k){var o=console[k];console[k]=function(){s(k,[].slice.call(arguments));if(o)o.apply(console,arguments)}});window.addEventListener("error",function(e){s("error",[e.message+" (line "+e.lineno+")"])})})();<\/script>';
+
+function gameArtifact(genre){
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
+'<title>' + genre + '</title>\n<style>\n' +
+'*{margin:0;padding:0;box-sizing:border-box}\n' +
+'body{background:#07050f;color:#e6e2f5;font-family:Inter,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;padding:14px}\n' +
+'h1{font-family:Orbitron,sans-serif;font-size:14px;letter-spacing:.3em;color:#ffd88a;text-align:center}\n' +
+'#wrap{position:relative;width:100%;max-width:760px}\n' +
+'canvas{width:100%;height:auto;display:block;background:radial-gradient(120% 90% at 50% 8%,#170c33,#07050f);border:1px solid rgba(168,85,247,.35);border-radius:12px}\n' +
+'#hud{position:absolute;inset:0;pointer-events:none;padding:11px 13px;display:flex;justify-content:space-between;font-family:monospace;font-size:11px;color:#b7aee0;text-shadow:0 0 8px #000}\n' +
+'#hud b{color:#ffd88a;font-weight:500}\n' +
+'#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;background:rgba(5,3,12,.74);text-align:center;padding:18px;border-radius:12px}\n' +
+'#overlay h2{font-family:Orbitron,sans-serif;letter-spacing:.2em;font-size:19px;color:#e9d5ff}\n' +
+'#overlay p{font-size:12px;color:#a49ccf;max-width:430px;line-height:1.6}\n' +
+'kbd{font-family:monospace;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:5px;padding:1px 6px;font-size:11px}\n' +
+'.hide{display:none}\n' +
+'</style>\n</head>\n<body>\n<h1>' + genre + '</h1>\n' +
+'<div id="wrap">\n<canvas id="stage" width="760" height="480"></canvas>\n' +
+'<div id="hud"><span>SCORE <b id="hS">0</b></span><span>WAVE <b id="hW">1</b></span><span>HULL <b id="hL">3</b></span></div>\n' +
+'<div id="overlay"><h2 id="oT">' + genre + '</h2><p id="oB">Move with WASD, arrows or the pointer. P pauses.</p><p style="color:#c4bbe9">PRESS <kbd>SPACE</kbd> OR CLICK TO FORGE</p></div>\n</div>\n' +
+'<script>\n(function(){\n' +
+'  var cv=document.getElementById("stage"),ctx=cv.getContext("2d"),W=cv.width,H=cv.height;\n' +
+'  var hS=document.getElementById("hS"),hW=document.getElementById("hW"),hL=document.getElementById("hL");\n' +
+'  var ov=document.getElementById("overlay"),oT=document.getElementById("oT"),oB=document.getElementById("oB");\n' +
+'  var keys={},pl={x:W*.5,y:H-70,r:11,sp:270,cool:0,inv:0};\n' +
+'  var shots=[],eshots=[],foes=[],parts=[],stars=[],pool={s:[],e:[],p:[]};\n' +
+'  var score=0,best=0,lives=3,wave=1,tick=0,mode="title",flash=0,shake=0;\n' +
+'  for(var i=0;i<110;i++)stars.push({x:Math.random()*W,y:Math.random()*H,z:.25+Math.random()*1.4});\n' +
+'  function take(a){return a.length?a.pop():{}}\n' +
+'  function give(a,o){if(a.length<600)a.push(o)}\n' +
+'  function spawnWave(){var n=4+wave*2;for(var i=0;i<n;i++){var w=(wave%3===0&&i%4===0);foes.push({x:50+Math.random()*(W-100),y:-40-Math.random()*200,r:w?17:12,hp:w?5:2,type:w?"weaver":"drone",ph:Math.random()*6.283,vy:32+wave*3.5,fire:70+Math.random()*140});}console.log("wave",wave,"entities",n);}\n' +
+'  function ring(x,y,n,sp,off){for(var i=0;i<n;i++){var a=off+i*6.28318/n,b=take(pool.e);b.x=x;b.y=y;b.vx=Math.cos(a)*sp;b.vy=Math.sin(a)*sp;b.r=4.5;eshots.push(b);}}\n' +
+'  function aimed(x,y,sp){var dx=pl.x-x,dy=pl.y-y,d=Math.sqrt(dx*dx+dy*dy)||1,b=take(pool.e);b.x=x;b.y=y;b.vx=dx/d*sp;b.vy=dy/d*sp;b.r=5;eshots.push(b);}\n' +
+'  function burst(x,y,n,h){for(var i=0;i<n;i++){var p=take(pool.p),a=Math.random()*6.283,s=40+Math.random()*210;p.x=x;p.y=y;p.vx=Math.cos(a)*s;p.vy=Math.sin(a)*s;p.life=.35+Math.random()*.5;p.h=h;parts.push(p);}}\n' +
+'  function reset(){shots.length=0;eshots.length=0;foes.length=0;parts.length=0;score=0;lives=3;wave=1;tick=0;flash=0;shake=0;pl.x=W*.5;pl.y=H-70;pl.inv=90;mode="play";ov.classList.add("hide");spawnWave();console.log("construct online");}\n' +
+'  function over(){mode="over";best=Math.max(best,score);oT.textContent="TRIAD SILENCED";oB.textContent="Score "+score+" · Best "+best+" · Wave "+wave;ov.classList.remove("hide");console.log("run ended at wave",wave);}\n' +
+'  addEventListener("keydown",function(e){keys[e.key.toLowerCase()]=true;if(e.code==="Space"){e.preventDefault();if(mode!=="play")reset();}if(e.key.toLowerCase()==="p"&&mode==="play"){mode="pause";oT.textContent="PAUSED";oB.textContent="Press P to resume.";ov.classList.remove("hide");}else if(e.key.toLowerCase()==="p"&&mode==="pause"){mode="play";ov.classList.add("hide");}});\n' +
+'  addEventListener("keyup",function(e){keys[e.key.toLowerCase()]=false;});\n' +
+'  cv.addEventListener("pointermove",function(e){var r=cv.getBoundingClientRect();pl.x=(e.clientX-r.left)*(W/r.width);pl.y=(e.clientY-r.top)*(H/r.height);});\n' +
+'  ov.addEventListener("click",function(){if(mode!=="play")reset();});\n' +
+'  function hit(){lives--;pl.inv=110;flash=8;shake=12;burst(pl.x,pl.y,34,0);console.log("hull breach",lives);if(lives<=0)over();}\n' +
+'  function step(dt){\n' +
+'    tick+=dt*60;if(mode!=="play")return;\n' +
+'    var mx=0,my=0;if(keys.arrowleft||keys.a)mx-=1;if(keys.arrowright||keys.d)mx+=1;if(keys.arrowup||keys.w)my-=1;if(keys.arrowdown||keys.s)my+=1;\n' +
+'    var m=Math.sqrt(mx*mx+my*my)||1;\n' +
+'    pl.x=Math.max(16,Math.min(W-16,pl.x+mx/m*pl.sp*dt));pl.y=Math.max(16,Math.min(H-16,pl.y+my/m*pl.sp*dt));\n' +
+'    if(pl.inv>0)pl.inv--;\n' +
+'    pl.cool-=dt;if(pl.cool<=0){pl.cool=.11;var s=take(pool.s);s.x=pl.x;s.y=pl.y-14;s.r=3.4;shots.push(s);}\n' +
+'    for(var i=shots.length-1;i>=0;i--){var s2=shots[i];s2.y-=640*dt;if(s2.y<-20){shots.splice(i,1);give(pool.s,s2);}}\n' +
+'    for(var j=eshots.length-1;j>=0;j--){var b=eshots[j];b.x+=b.vx*dt;b.y+=b.vy*dt;if(b.x<-30||b.x>W+30||b.y<-30||b.y>H+30){eshots.splice(j,1);give(pool.e,b);}}\n' +
+'    for(var k=foes.length-1;k>=0;k--){var f=foes[k];f.y+=f.vy*dt;f.ph+=dt*2.1;if(f.type==="weaver")f.x+=Math.cos(f.ph)*95*dt;\n' +
+'      f.fire-=dt*60;if(f.fire<=0&&f.y>0){f.fire=f.type==="weaver"?90:150;if(f.type==="weaver")ring(f.x,f.y,10,118,f.ph);else aimed(f.x,f.y,165+wave*6);}\n' +
+'      if(f.y>H+40){foes.splice(k,1);continue;}\n' +
+'      for(var q=shots.length-1;q>=0;q--){var sh=shots[q],dx=sh.x-f.x,dy=sh.y-f.y,rr=f.r+sh.r;\n' +
+'        if(dx*dx+dy*dy<rr*rr){shots.splice(q,1);give(pool.s,sh);f.hp--;burst(sh.x,sh.y,4,45);if(f.hp<=0){burst(f.x,f.y,f.type==="weaver"?26:14,f.type==="weaver"?285:190);foes.splice(k,1);score+=f.type==="weaver"?250:90;shake=5;}break;}}\n' +
+'      if(pl.inv<=0&&foes[k]===f){var px=pl.x-f.x,py=pl.y-f.y,rr2=(pl.r+f.r)*.86;if(px*px+py*py<rr2*rr2){burst(f.x,f.y,24,20);foes.splice(k,1);hit();}}}\n' +
+'    if(pl.inv<=0){for(var e2=eshots.length-1;e2>=0;e2--){var eb=eshots[e2],dx2=pl.x-eb.x,dy2=pl.y-eb.y,rr3=(pl.r+eb.r)*.8;if(dx2*dx2+dy2*dy2<rr3*rr3){eshots.splice(e2,1);give(pool.e,eb);hit();break;}}}\n' +
+'    for(var p=parts.length-1;p>=0;p--){var pt=parts[p];pt.x+=pt.vx*dt;pt.y+=pt.vy*dt;pt.vx*=.94;pt.vy*=.94;pt.life-=dt;if(pt.life<=0){parts.splice(p,1);give(pool.p,pt);}}\n' +
+'    for(var st=0;st<stars.length;st++){stars[st].y+=stars[st].z*42*dt;if(stars[st].y>H){stars[st].y=-2;stars[st].x=Math.random()*W;}}\n' +
+'    if(foes.length===0){wave++;score+=320;if(wave%3===0)ring(pl.x,H*.25,16,100,tick*.02);spawnWave();}\n' +
+'    if(flash>0)flash--;if(shake>0)shake*=.86;\n' +
+'  }\n' +
+'  function draw(){\n' +
+'    ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,H);\n' +
+'    if(shake>.4)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);\n' +
+'    for(var i=0;i<stars.length;i++){var s=stars[i];ctx.fillStyle="rgba(200,190,255,"+(0.15+s.z*.4).toFixed(2)+")";ctx.fillRect(s.x,s.y,s.z*1.7,s.z*1.7);}\n' +
+'    ctx.shadowColor="#22d3ee";ctx.shadowBlur=12;ctx.fillStyle="#a5f3fc";\n' +
+'    for(var a=0;a<shots.length;a++){ctx.fillRect(shots[a].x-1.6,shots[a].y-9,3.2,14);}\n' +
+'    ctx.shadowColor="#e879f9";ctx.fillStyle="#fca5f5";\n' +
+'    for(var b=0;b<eshots.length;b++){var e=eshots[b];ctx.beginPath();ctx.arc(e.x,e.y,e.r,0,6.283);ctx.fill();}\n' +
+'    for(var f=0;f<foes.length;f++){var fo=foes[f],hue=fo.type==="weaver"?285:190;ctx.save();ctx.translate(fo.x,fo.y);ctx.rotate(Math.sin(fo.ph)*.25);\n' +
+'      ctx.fillStyle="hsla("+hue+",85%,62%,.95)";ctx.shadowColor="hsla("+hue+",90%,60%,.9)";ctx.shadowBlur=16;ctx.beginPath();\n' +
+'      if(fo.type==="weaver"){ctx.moveTo(0,-fo.r);ctx.lineTo(fo.r,0);ctx.lineTo(0,fo.r);ctx.lineTo(-fo.r,0);}else{ctx.moveTo(0,-fo.r);ctx.lineTo(fo.r*.9,fo.r*.8);ctx.lineTo(-fo.r*.9,fo.r*.8);}\n' +
+'      ctx.closePath();ctx.fill();ctx.restore();}\n' +
+'    ctx.shadowBlur=0;\n' +
+'    for(var p=0;p<parts.length;p++){var pt=parts[p];ctx.fillStyle="hsla("+pt.h+",95%,"+(55+pt.life*40)+"%,"+Math.min(1,pt.life*1.8).toFixed(2)+")";ctx.fillRect(pt.x-1.7,pt.y-1.7,3.4,3.4);}\n' +
+'    if(mode==="play"||mode==="pause"){if(!(pl.inv>0&&Math.floor(tick/4)%2===0)){ctx.save();ctx.translate(pl.x,pl.y);ctx.fillStyle="#ffe6a8";ctx.shadowColor="#ff9a3c";ctx.shadowBlur=18;\n' +
+'      ctx.beginPath();ctx.moveTo(0,-14);ctx.lineTo(10,11);ctx.lineTo(0,6);ctx.lineTo(-10,11);ctx.closePath();ctx.fill();ctx.restore();ctx.shadowBlur=0;}}\n' +
+'    if(flash>0){ctx.fillStyle="rgba(255,80,120,"+(flash/22).toFixed(3)+")";ctx.fillRect(-20,-20,W+40,H+40);}\n' +
+'    hS.textContent=score;hW.textContent=wave;hL.textContent=Math.max(0,lives);\n' +
+'  }\n' +
+'  var last=performance.now(),acc=0,STEP=1/120;\n' +
+'  function fr(now){var dt=Math.min(.1,(now-last)/1000);last=now;acc+=dt;var g=0;while(acc>=STEP&&g<12){step(STEP);acc-=STEP;g++;}draw();requestAnimationFrame(fr);}\n' +
+'  requestAnimationFrame(fr);console.log("' + genre + ' mounted");\n' +
+'})();\n<\/script>\n</body>\n</html>';
+}
+
+function modArtifact(genre){
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
+'<title>' + genre + ' Mod Harness</title>\n<style>\n' +
+'*{margin:0;padding:0;box-sizing:border-box}\n' +
+'body{background:#07050f;color:#e6e2f5;font-family:Inter,system-ui,sans-serif;padding:14px;display:grid;grid-template-columns:1fr 300px;gap:12px;min-height:100vh}\n' +
+'@media(max-width:820px){body{grid-template-columns:1fr}}\n' +
+'.panel{background:rgba(20,14,38,.7);border:1px solid rgba(160,140,255,.2);border-radius:12px;padding:13px}\n' +
+'h1{font-family:Orbitron,sans-serif;font-size:12px;letter-spacing:.24em;color:#a5b4fc;margin-bottom:9px}\n' +
+'h2{font-family:Orbitron,sans-serif;font-size:10px;letter-spacing:.2em;color:#d8b4fe;margin-bottom:9px}\n' +
+'canvas{width:100%;height:auto;display:block;background:radial-gradient(120% 90% at 50% 0%,#160c30,#07050f);border:1px solid rgba(168,85,247,.3);border-radius:10px}\n' +
+'.mod{display:flex;align-items:center;gap:9px;padding:8px;border:1px solid rgba(160,140,255,.14);border-radius:9px;margin-bottom:7px}\n' +
+'.mod b{font-size:12px;font-weight:600;display:block}.mod span{font-size:10px;color:#8b83b8}\n' +
+'.sw{margin-left:auto;width:36px;height:19px;border-radius:99px;background:rgba(255,255,255,.1);position:relative;cursor:pointer;flex:none}\n' +
+'.sw::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#8b83b8;transition:transform .2s}\n' +
+'.sw.on{background:rgba(168,85,247,.5)}.sw.on::after{transform:translateX(17px);background:#f5d0fe}\n' +
+'#inv{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}\n' +
+'.slot{aspect-ratio:1;border:1px dashed rgba(160,140,255,.3);border-radius:8px;display:grid;place-items:center;font-size:17px}\n' +
+'#log{font-family:monospace;font-size:10px;color:#9be89b;max-height:140px;overflow:auto;line-height:1.5}\n' +
+'.stat{display:flex;justify-content:space-between;font-family:monospace;font-size:11px;color:#b7aee0;margin-top:5px}.stat b{color:#ffd88a;font-weight:500}\n' +
+'</style>\n</head>\n<body>\n' +
+'<div class="panel"><h1>' + genre + ' · MODDABLE HOST</h1>\n<canvas id="host" width="640" height="380"></canvas>\n' +
+'<div class="stat"><span>HARVESTED</span><b id="sS">0</b></div><div class="stat"><span>VELOCITY</span><b id="sV">1.00x</b></div><div class="stat"><span>ACTIVE MODS</span><b id="sM">0</b></div></div>\n' +
+'<div class="panel"><h2>MOD LOADER</h2><div id="modList"></div><h2 style="margin-top:11px">INVENTORY</h2><div id="inv"></div><h2 style="margin-top:11px">HOOK TRACE</h2><div id="log"></div></div>\n' +
+'<script>\n(function(){\n' +
+'  var cv=document.getElementById("host"),ctx=cv.getContext("2d"),W=cv.width,H=cv.height;\n' +
+'  var logEl=document.getElementById("log"),sS=document.getElementById("sS"),sV=document.getElementById("sV"),sM=document.getElementById("sM"),invEl=document.getElementById("inv");\n' +
+'  var HOST={player:{x:W*.5,y:H*.5,r:12,speed:215},crystals:[],score:0,timeScale:1,tick:0,inventory:[],hooks:{},palette:["#ffe6a8","#ff9a3c","#ffd88a"]};\n' +
+'  function trace(m){var d=document.createElement("div");d.textContent=m;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;while(logEl.childElementCount>40)logEl.removeChild(logEl.firstChild);console.log(m);}\n' +
+'  HOST.hook=function(n,f){if(!HOST.hooks[n])HOST.hooks[n]=[];HOST.hooks[n].push(f);trace("hook attached :: "+n);return function(){HOST.hooks[n]=HOST.hooks[n].filter(function(x){return x!==f;});trace("hook released :: "+n);};};\n' +
+'  HOST.emit=function(n,p){var l=HOST.hooks[n]||[];for(var i=0;i<l.length;i++){try{l[i](p,HOST);}catch(e){trace("hook fault :: "+n+" :: "+e.message);}}};\n' +
+'  HOST.pickup=function(c){HOST.score+=c.value;HOST.emit("onPickup",c);};\n' +
+'  function add(){HOST.crystals.push({x:30+Math.random()*(W-60),y:30+Math.random()*(H-60),r:6+Math.random()*6,value:10+Math.floor(Math.random()*40),color:"#7dd3fc"});}\n' +
+'  for(var i=0;i<7;i++)add();\n' +
+'  var keys={};addEventListener("keydown",function(e){keys[e.key.toLowerCase()]=true;});addEventListener("keyup",function(e){keys[e.key.toLowerCase()]=false;});\n' +
+'  cv.addEventListener("pointermove",function(e){var r=cv.getBoundingClientRect();HOST.player.x=(e.clientX-r.left)*(W/r.width);HOST.player.y=(e.clientY-r.top)*(H/r.height);});\n' +
+'  function update(dt){HOST.tick+=dt*60*HOST.timeScale;HOST.emit("beforeUpdate",dt);\n' +
+'    var mx=0,my=0;if(keys.arrowleft||keys.a)mx-=1;if(keys.arrowright||keys.d)mx+=1;if(keys.arrowup||keys.w)my-=1;if(keys.arrowdown||keys.s)my+=1;\n' +
+'    var m=Math.sqrt(mx*mx+my*my)||1,P=HOST.player;\n' +
+'    P.x=Math.max(14,Math.min(W-14,P.x+mx/m*P.speed*dt*HOST.timeScale));P.y=Math.max(14,Math.min(H-14,P.y+my/m*P.speed*dt*HOST.timeScale));\n' +
+'    for(var i=HOST.crystals.length-1;i>=0;i--){var c=HOST.crystals[i],dx=P.x-c.x,dy=P.y-c.y,rr=P.r+c.r;if(dx*dx+dy*dy<rr*rr){HOST.crystals.splice(i,1);HOST.pickup(c);add();}}\n' +
+'    HOST.emit("afterUpdate",dt);}\n' +
+'  function render(){ctx.clearRect(0,0,W,H);\n' +
+'    for(var i=0;i<HOST.crystals.length;i++){var c=HOST.crystals[i];ctx.fillStyle=c.color;ctx.shadowColor=c.color;ctx.shadowBlur=16;ctx.save();ctx.translate(c.x,c.y);ctx.rotate(HOST.tick*.02+c.x);ctx.fillRect(-c.r,-c.r,c.r*2,c.r*2);ctx.restore();}\n' +
+'    var p=HOST.player;ctx.fillStyle=HOST.palette[0];ctx.shadowColor=HOST.palette[1];ctx.shadowBlur=22;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.283);ctx.fill();ctx.shadowBlur=0;\n' +
+'    ctx.strokeStyle=HOST.palette[2];ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p.x,p.y,p.r+8+Math.sin(HOST.tick*.06)*3,0,6.283);ctx.stroke();}\n' +
+'  function renderInv(){invEl.innerHTML="";for(var i=0;i<8;i++){var s=document.createElement("div");s.className="slot";var it=HOST.inventory[i];if(it){s.textContent=it.glyph;s.title="value "+it.value;s.style.color="#ffd88a";s.style.borderStyle="solid";}invEl.appendChild(s);}}\n' +
+'  var MODS=[\n' +
+'    {id:"inventory",name:"Inventory Core",desc:"Captures pickups into an 8-slot grid",setup:function(api){return api.host.hook("onPickup",function(c,h){if(h.inventory.length>=8)h.inventory.shift();h.inventory.push({glyph:c.value>30?"\\u25c8":"\\u25c7",value:c.value});renderInv();});}},\n' +
+'    {id:"prism",name:"Prism Palette",desc:"Procedurally recolors host sprites",setup:function(api){var h=Math.floor(Math.random()*360),old=api.host.palette;api.host.palette=["hsl("+h+",95%,78%)","hsl("+((h+40)%360)+",90%,55%)","hsl("+((h+200)%360)+",90%,72%)"];var off=api.host.hook("afterUpdate",function(){for(var i=0;i<api.host.crystals.length;i++)api.host.crystals[i].color="hsl("+((h+i*34)%360)+",90%,68%)";});api.trace("palette patched to hue "+h);return function(){off();api.host.palette=old;api.host.crystals.forEach(function(c){c.color="#7dd3fc";});};}},\n' +
+'    {id:"magnet",name:"Relic Magnet",desc:"Bonus yield on every harvest",setup:function(api){return api.host.hook("onPickup",function(c,h){h.score+=Math.round(c.value*.5);});}},\n' +
+'    {id:"chrono",name:"Chrono Drag",desc:"Time-scales the simulation to 0.55x",setup:function(api){api.host.timeScale=.55;api.trace("timeScale overwritten");return function(){api.host.timeScale=1;};}},\n' +
+'    {id:"scribe",name:"Lore Scribe",desc:"Logs codex entries on every pickup",setup:function(api){var lines=["The relic hums with solar residue.","A shard of the Eldritch lattice.","Nexus feather, still warm.","Dust from the first accord."];return api.host.hook("onPickup",function(c){api.trace("codex :: "+lines[c.value%lines.length]);});}}\n' +
+'  ];\n' +
+'  var API={host:HOST,trace:trace},active={},listEl=document.getElementById("modList");\n' +
+'  MODS.forEach(function(mod){var row=document.createElement("div");row.className="mod";row.innerHTML="<div><b>"+mod.name+"</b><span>"+mod.desc+"</span></div>";\n' +
+'    var sw=document.createElement("div");sw.className="sw";\n' +
+'    sw.addEventListener("click",function(){if(active[mod.id]){active[mod.id]();delete active[mod.id];sw.classList.remove("on");trace("mod detached :: "+mod.id);}else{active[mod.id]=mod.setup(API);sw.classList.add("on");trace("mod injected :: "+mod.id);}sM.textContent=Object.keys(active).length;});\n' +
+'    row.appendChild(sw);listEl.appendChild(row);});\n' +
+'  renderInv();\n' +
+'  var last=performance.now();\n' +
+'  function fr(now){var dt=Math.min(.05,(now-last)/1000);last=now;update(dt);render();sS.textContent=HOST.score;sV.textContent=HOST.timeScale.toFixed(2)+"x";requestAnimationFrame(fr);}\n' +
+'  requestAnimationFrame(fr);trace("host booted :: "+MODS.length+" mods registered");\n' +
+'})();\n<\/script>\n</body>\n</html>';
+}
+
+/* ==========================================================
+   SANDBOX
+   ========================================================== */
+let hotTimer = null;
+function syncMeta(){ $('#locOut').textContent = editor.value.split('\n').length + ' lines'; }
+function run(){
+  preview.srcdoc = BRIDGE + editor.value;
+  $('#reloadOut').textContent = 'hot @ ' + ts();
+}
+function ensureAiOption(){
+  const sel = $('#artifactSel');
+  if(!sel.querySelector('option[value="ai"]')){
+    const o = document.createElement('option');
+    o.value = 'ai'; o.textContent = 'TRIAD OUTPUT';
+    sel.insertBefore(o, sel.firstChild);
+  }
+}
+function setArtifact(kind){
+  state.artifact = kind;
+  $('#artifactSel').value = kind;
+  let code;
+  if(kind === 'ai' && state.aiCode) code = state.aiCode;
+  else if(kind === 'mod') code = modArtifact(state.intent.genre);
+  else code = gameArtifact(state.intent.genre);
+  $('#fileName').textContent = kind === 'mod' ? 'mod_harness.html' : kind === 'ai' ? 'triad_output.html' : 'construct.html';
+  editor.value = code;
+  syncMeta(); run();
+  if(kind !== 'ai') save();
+}
+window.addEventListener('message', function(ev){
+  if(!ev.data || ev.data.__c3 !== 1) return;
+  const box = $('#consoleBody');
+  const colors = { log:'rgba(185,240,196,.72)', warn:'#fcd34d', error:'#fca5a5', info:'#a5b4fc' };
+  const el = document.createElement('div');
+  el.style.color = colors[ev.data.level] || colors.log;
+  el.textContent = '[' + ev.data.level + '] ' + ev.data.text;
+  box.appendChild(el);
+  while(box.childElementCount > 60) box.removeChild(box.firstChild);
+  box.scrollTop = box.scrollHeight;
+});
+
+/* ==========================================================
+   FORGE
+   ========================================================== */
+function sleep(ms){
+  return new Promise(function(resolve){
+    const t = setTimeout(resolve, ms);
+    if(runAbort) runAbort.signal.addEventListener('abort', function(){ clearTimeout(t); resolve(); });
+  });
+}
+function aborted(){ return !runAbort || runAbort.signal.aborted; }
+function showChip(v){
+  const c = $('#readyChip');
+  ['opacity-0','translate-y-1','pointer-events-none'].forEach(function(k){ c.classList.toggle(k, !v); });
+  $('#phaseOut').style.display = v ? 'none' : '';
+}
+function setPhase(t){ $('#phaseOut').textContent = t; }
+
+/* ---- automatic lane assignment: every agent always receives exactly one lane ---- */
+const LANES = {
+  structure:{ key:'structure', title:'STRUCTURE', brief:'the HTML scaffold, canvas or DOM shell, responsive layout, HUD, menus, screen state machine, input mapping and CSS design system' },
+  logic:{     key:'logic',     title:'LOGIC',     brief:'the simulation core: fixed-timestep loop, entity model, physics and collision, AI behaviour, spawning director, scoring and difficulty mathematics' },
+  creative:{  key:'creative',  title:'CREATIVE',  brief:'procedural art and palette generation, audio or juice, lore and copy, the mod hook registry with runtime script injection, and a self-test harness' }
+};
+const LANE_KEYS = ['structure','logic','creative'];
+const PERMS = [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+
+function assignLanes(scores){
+  let best = null;
+  for(let p = 0; p < PERMS.length; p++){
+    const perm = PERMS[p];
+    let total = 0;
+    const mapping = [];
+    for(let i = 0; i < 3; i++){
+      const agentId = IDS[i];
+      const lane = LANE_KEYS[perm[i]];
+      const affinity = AGENTS[agentId].w[lane];
+      const demand = 1 + (scores[lane] || 0);
+      const capability = slotMode(agentId) === 'live' ? 1.35 : slotMode(agentId) === 'key' ? 1.05 : 1;
+      total += affinity * demand * capability;
+      mapping.push({ agent:agentId, lane:lane, weight:affinity * demand * capability, demand:demand });
+    }
+    if(!best || total > best.total) best = { total:total, mapping:mapping };
+  }
+  best.mapping.sort(function(a, b){ return b.demand - a.demand || b.weight - a.weight; });
+  return best.mapping.map(function(m, i){
+    return { agent:m.agent, lane:m.lane, rank:RANKS[i], mode:slotMode(m.agent), model:state.agents[m.agent].model || 'unspecified' };
+  });
+}
+
+/* ---- deterministic quality gate ---- */
+function scoreArtifact(html){
+  const h = html || '', low = h.toLowerCase();
+  const issues = [];
+  let score = 0;
+  if(/<!doctype html/.test(low)) score += 9; else issues.push('missing <!DOCTYPE html>');
+  if(/<html[\s>]/.test(low) && /<\/html>/.test(low)) score += 9; else issues.push('the <html> element is not closed');
+  if(/<script[\s>]/.test(low) && /<\/script>/.test(low)) score += 14; else issues.push('there is no executable script block');
+  if(/<canvas|<svg|<div/.test(low)) score += 7; else issues.push('no renderable root element');
+  if(/requestanimationframe|addeventlistener|setinterval/.test(low)) score += 14; else issues.push('no runtime loop or event listeners');
+  if(h.length > 2500) score += 9;
+  if(h.length > 9000) score += 8;
+  if(h.length < 1200) issues.push('document is suspiciously short');
+  if(/\u2026|\.\.\.\s*$|\/\/\s*(todo|rest of|your code|implementation)|\/\*\s*(todo|rest of)/im.test(h)) issues.push('contains placeholder or truncation markers');
+  else score += 11;
+  if(/(src|href)=["']https?:/i.test(h)) issues.push('depends on external network assets');
+  else score += 8;
+  const open = (h.match(/\{/g) || []).length, close = (h.match(/\}/g) || []).length;
+  if(Math.abs(open - close) <= 2) score += 6; else issues.push('unbalanced braces · output looks truncated');
+  if(/<style[\s>]/.test(low) || /style=/.test(low)) score += 5;
+  return { score:Math.max(0, Math.min(100, score)), issues:issues };
+}
+
+function pickRepairAgent(plan){
+  const live = plan.filter(function(p){ return p.mode === 'live'; });
+  if(!live.length) return null;
+  const pref = live.filter(function(p){ return p.lane === 'logic'; })[0] || live[0];
+  return pref.agent;
+}
+
+async function repairPass(agentId, html, issues, directive){
+  const a = AGENTS[agentId];
+  const sys = a.system + ' You are now acting as the COUNCIL QUALITY GATE. Repair, complete and harden the supplied document. Output ONE complete, self-contained, runnable HTML document inside a single ```html code block, with inline CSS and JavaScript, no external assets, no commentary, no placeholders and nothing omitted.';
+  const user = 'ORIGINAL DIRECTIVE:\n' + directive +
+    '\n\nDEFECTS DETECTED BY THE GATE:\n- ' + issues.join('\n- ') +
+    '\n\nDOCUMENT TO REPAIR:\n```html\n' + html.slice(0, 70000) + '\n```';
+  const text = await callModel(agentId, sys, user, 200000, 8192);
+  return extractHtml(text);
+}
+
+async function simulateStage(plan, s){
+  const a = AGENTS[plan[s].agent];
+  const lane = LANES[plan[s].lane];
+  const lines = [
+    a.name + ' holds the ' + plan[s].rank.toLowerCase() + ' hand · lane ' + lane.title,
+    s === 0 ? 'decomposing the directive across ' + lane.title.toLowerCase() + ' work orders' : 'reconciling contracts with ' + AGENTS[plan[s - 1].agent].name,
+    'composing ' + lane.title.toLowerCase() + ' modules into the shared buffer',
+    'self-review complete · stage sealed'
+  ];
+  for(let p = 0; p < lines.length; p++){
+    if(aborted()) return;
+    typeOut(lines[p], a.accent);
+    await sleep(380 + Math.random() * 220);
+  }
+}
+
+function projectName(intent){
+  const raw = (intent.raw || '').trim();
+  if(!raw) return intent.genre;
+  const words = raw.replace(/[^a-zA-Z0-9 ]/g, ' ').split(/\s+/).filter(function(w){ return w.length > 3; }).slice(0, 4);
+  return (intent.genre + ' · ' + (words.join(' ') || 'construct')).slice(0, 72);
+}
+
+async function forge(){
+  if(state.busy){ if(runAbort) runAbort.abort(); return; }
+  state.busy = true;
+  runAbort = new AbortController();
+  $('#forgeBtn').dataset.busy = '1';
+  $('#forgeLabel').textContent = 'ABORT';
+  showChip(false);
+  setPhase('Routing');
+
+  const intent = applyIntent(false);
+  const directive = intent.raw || 'Build a small, polished, self-contained HTML5 arcade game.';
+  const plan = assignLanes(intent.scores);
+  state.route = plan.map(function(p){ return p.agent; });
+  paintRails();
+
+  typeOut(routeLine(state.route), '#e9d5ff');
+  await sleep(620);
+  say('Lane assignment · ' + plan.map(function(p){ return AGENTS[p.agent].name + '→' + LANES[p.lane].title; }).join('  ·  '), '#cfc7f2');
+  await sleep(500);
+
+  const liveCount = plan.filter(function(p){ return p.mode === 'live'; }).length;
+  say(liveCount ? liveCount + ' live endpoint' + (liveCount > 1 ? 's' : '') + ' engaged · ' + (3 - liveCount) + ' simulated · all three lanes staffed'
+                : 'No live endpoints · the full triad runs in simulation', liveCount ? '#86efac' : '#fcd34d');
+  setPhase('Forging');
+
+  const outputs = [];
+  for(let s = 0; s < plan.length; s++){
+    if(aborted()) break;
+    const step = plan[s], id = step.agent, a = AGENTS[id], lane = LANES[step.lane];
+    state.stage = id;
+    setLive(id); paintStatus();
+
+    if(step.mode === 'live'){
+      const final = s === plan.length - 1;
+      const roster = plan.map(function(p, i){ return (i + 1) + '. ' + AGENTS[p.agent].name + ' — ' + LANES[p.lane].title; }).join('\n');
+      const sys = a.system +
+        ' Your assigned lane for this build is ' + lane.title + ': you own ' + lane.brief + '.' +
+        ' The council pipeline is:\n' + roster + '\n' +
+        (final
+          ? ' You are the FINAL stage. Integrate every prior contribution faithfully — do not discard a collaborator\'s work. Return ONE complete, self-contained, immediately playable HTML document with inline CSS and JavaScript, no external assets, no placeholders, no truncation, inside a single ```html code block. It must run inside a sandboxed iframe with allow-scripts.'
+          : ' You are stage ' + (s + 1) + ' of 3. Deliver a tight specification plus the real, complete code modules for your lane only — functions another model can paste in verbatim. Do not write the whole document. Stay under 1000 words.');
+      const prior = outputs.map(function(o){ return '### ' + AGENTS[o.id].name + ' — lane ' + LANES[o.lane].title + '\n' + o.text.slice(0, 16000); }).join('\n\n');
+      const user = 'DIRECTIVE:\n' + directive + (prior ? '\n\nPRIOR COUNCIL OUTPUT (integrate, do not duplicate):\n' + prior : '');
+
+      typeOut(a.name + ' · dispatching lane ' + lane.title + ' to endpoint', a.accent);
+      const t0 = performance.now();
+      try{
+        const text = await callModel(id, sys, user, 200000, final ? 8192 : 2600);
+        outputs.push({ id:id, lane:step.lane, text:text });
+        say(a.name + ' returned ' + (text.length / 1000).toFixed(1) + 'k chars in ' + ((performance.now() - t0) / 1000).toFixed(1) + 's', a.accent);
+      }catch(err){
+        if(aborted()) break;
+        say(a.name + ' endpoint fault · ' + err.message + ' · lane runs simulated', '#fca5a5');
+        await simulateStage(plan, s);
+      }
+    } else {
+      await simulateStage(plan, s);
+    }
+
+    if(aborted()) break;
+    if(s < plan.length - 1){
+      const next = plan[s + 1].agent;
+      emit(id, next, 26);
+      say('Transmission · ' + a.name + ' → ' + AGENTS[next].name, '#cfc7f2');
+      await sleep(860);
+    }
+  }
+
+  state.stage = null; setLive(null); paintStatus();
+
+  if(aborted()){
+    say('Forging aborted by operator.', '#fca5a5');
+    setPhase('Aborted');
+    return endForge();
+  }
+
+  setPhase('Assembling');
+  let html = '';
+  for(let i = outputs.length - 1; i >= 0 && !html; i--) html = extractHtml(outputs[i].text);
+
+  let gate = html ? scoreArtifact(html) : { score:0, issues:['no HTML document was produced'] };
+  if(html) say('Quality gate · ' + gate.score + '/100' + (gate.issues.length ? ' · ' + gate.issues.length + ' defect' + (gate.issues.length > 1 ? 's' : '') : ' · clean'), gate.score >= 72 ? '#86efac' : '#fcd34d');
+
+  if(html && gate.score < 72){
+    const fixer = pickRepairAgent(plan);
+    if(fixer && !aborted()){
+      setPhase('Repairing');
+      state.stage = fixer; setLive(fixer); paintStatus();
+      typeOut(AGENTS[fixer].name + ' · quality gate repair pass', AGENTS[fixer].accent);
+      try{
+        const fixed = await repairPass(fixer, html, gate.issues, directive);
+        const reScore = fixed ? scoreArtifact(fixed) : { score:0, issues:[] };
+        if(fixed && reScore.score > gate.score){
+          html = fixed; gate = reScore;
+          say('Repair accepted · quality lifted to ' + gate.score + '/100', '#86efac');
+        } else {
+          say('Repair rejected · original scored higher, keeping it', '#fcd34d');
+        }
+      }catch(err){
+        say('Repair pass failed · ' + err.message, '#fca5a5');
+      }
+      state.stage = null; setLive(null); paintStatus();
+    }
+  }
+
+  const fallbackKind = intent.modding ? 'mod' : 'game';
+  const fallbackCode = fallbackKind === 'mod' ? modArtifact(intent.genre) : gameArtifact(intent.genre);
+  const fallbackGate = scoreArtifact(fallbackCode);
+
+  let finalCode, finalKind, finalScore;
+  if(html && gate.score >= fallbackGate.score - 6){
+    finalCode = html; finalKind = 'ai'; finalScore = gate.score;
+    state.aiCode = html;
+    ensureAiOption();
+    setArtifact('ai');
+    typeOut('Triad output assembled · ' + html.split('\n').length + ' lines · quality ' + gate.score + '/100', '#86efac');
+  } else {
+    if(outputs.length) say('Model output scored below the curated template · shipping the stronger build', '#fcd34d');
+    finalCode = fallbackCode; finalKind = fallbackKind; finalScore = fallbackGate.score;
+    setArtifact(fallbackKind);
+    typeOut((intent.modding ? 'Mod injection harness' : intent.genre) + ' is live in the sandbox', '#86efac');
+  }
+
+  try{
+    const record = {
+      project_id:Council3Storage.makeId(),
+      name:projectName(intent),
+      prompt:directive,
+      code:finalCode,
+      score:finalScore,
+      pipeline:plan.map(function(p){
+        return { agent:AGENTS[p.agent].name, lane:LANES[p.lane].title, rank:p.rank, mode:p.mode, model:p.model };
+      }),
+      meta:{ genre:intent.genre, kind:finalKind, lead:intent.lead, modding:!!intent.modding, issues:gate.issues.slice(0, 6), liveStages:liveCount }
+    };
+    Council3Storage.captureWorkspace({
+      currentProjectId:record.project_id,
+      currentProjectName:record.name,
+      currentCodePayload:record.code,
+      currentPipeline:record.pipeline,
+      currentPrompt:record.prompt,
+      currentScore:record.score,
+      currentMeta:record.meta
+    });
+    Council3Storage.recordCreation(record);
+  }catch(err){
+    say('Library write failed · ' + err.message, '#fca5a5');
+  }
+
+  setPhase('Delivered');
+  showChip(true);
+  endForge();
+}
+function endForge(){
+  state.stage = null; setLive(null); paintStatus();
+  state.busy = false;
+  runAbort = null;
+  $('#forgeBtn').dataset.busy = '0';
+  $('#forgeLabel').textContent = 'INITIATE FORGING';
+}
+
+/* ==========================================================
+   CLOUD UI + CREATIONS LIBRARY
+   ========================================================== */
+const LANE_COLOR = { STRUCTURE:'#ff9b45', LOGIC:'#b06bff', CREATIVE:'#7f8cff' };
+const gallery = { query:'', sort:'recent', items:[] };
+
+function openCloud(v){ $('#cloudTray').classList.toggle('open', v); if(v) $('#tray').classList.remove('open'); }
+function openCreations(v){ $('#creations').classList.toggle('open', v); if(v) renderCreations(); }
+
+function fmtTime(iso){
+  const d = new Date(iso || Date.now());
+  if(isNaN(d.getTime())) return '—';
+  const diff = (Date.now() - d.getTime()) / 1000;
+  if(diff < 60) return 'just now';
+  if(diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if(diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  if(diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+  return d.toLocaleDateString();
+}
+function escHtml(s){
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderDirectory(list){
+  const box = $('#cloudDirectory');
+  $('#dirCount').textContent = list.length + ' record' + (list.length === 1 ? '' : 's');
+  box.innerHTML = '';
+  if(!list.length){
+    box.innerHTML = '<div class="mono text-[10px] text-[#c9c2ea]/30 py-2">Directory empty · pull from cloud or sync a build.</div>';
+    return;
+  }
+  list.forEach(function(rec){
+    const row = document.createElement('button');
+    row.className = 'dirRow w-full text-left rounded-lg border border-white/8 px-3 py-2 flex items-center gap-2.5';
+    const lanes = (rec.pipeline || []).map(function(p){ return (p.agent || '').slice(0,3); }).join('→') || 'TRIAD';
+    row.innerHTML =
+      '<span class="dot shrink-0" style="background:' + (rec.score >= 72 ? '#4ade80' : '#fcd34d') + '"></span>' +
+      '<span class="min-w-0 flex-1"><span class="block text-[11px] text-[#e9e6fb]/90 truncate">' + escHtml(rec.name) + '</span>' +
+      '<span class="block mono text-[9px] text-[#c9c2ea]/40 truncate">' + escHtml(lanes) + ' · ' + rec.score + '/100 · ' + fmtTime(rec.updated_at) + '</span></span>' +
+      '<i data-lucide="download" class="w-3 h-3 text-[#c9c2ea]/40 shrink-0"></i>';
+    row.addEventListener('click', function(){
+      try{
+        Council3Storage.injectIntoWorkspace(rec);
+        openCloud(false);
+        openSandbox(true);
+      }catch(err){ say('Inject failed · ' + err.message, '#fca5a5'); }
+    });
+    box.appendChild(row);
+  });
+  lucide.createIcons();
+}
+
+function renderCreations(){
+  const grid = $('#creationGrid');
+  let items = gallery.items.slice();
+  const q = gallery.query.trim().toLowerCase();
+  if(q){
+    items = items.filter(function(r){
+      return (r.name || '').toLowerCase().indexOf(q) > -1 ||
+             (r.prompt || '').toLowerCase().indexOf(q) > -1 ||
+             ((r.meta && r.meta.genre) || '').toLowerCase().indexOf(q) > -1;
+    });
+  }
+  if(gallery.sort === 'score') items.sort(function(a, b){ return (b.score || 0) - (a.score || 0); });
+  else if(gallery.sort === 'name') items.sort(function(a, b){ return (a.name || '').localeCompare(b.name || ''); });
+  else items.sort(function(a, b){ return (b.updated_at || '').localeCompare(a.updated_at || ''); });
+
+  $('#creationCount').textContent = String(gallery.items.length);
+  $('#creationMeta').textContent = gallery.items.length + ' stored · ' + items.length + ' shown';
+  grid.innerHTML = '';
+
+  if(!items.length){
+    grid.innerHTML = '<div class="col-span-full text-center py-16"><div class="label text-[#c9c2ea]/35">' +
+      (gallery.items.length ? 'Nothing matches that filter' : 'No creations yet — forge something and it lands here') + '</div></div>';
+    return;
+  }
+
+  items.forEach(function(rec){
+    const pipe = Array.isArray(rec.pipeline) ? rec.pipeline : [];
+    const cols = pipe.map(function(p){ return LANE_COLOR[p.lane] || '#8b83b8'; });
+    while(cols.length < 3) cols.push('#3b3560');
+    const card = document.createElement('article');
+    card.className = 'card glass rounded-xl p-3 flex flex-col gap-2.5';
+    card.innerHTML =
+      '<div class="cardArt" style="background:linear-gradient(135deg,' + cols[0] + '55,' + cols[1] + '66 46%,' + cols[2] + '55)"></div>' +
+      '<div class="min-w-0">' +
+        '<div class="text-[12px] text-[#efeaff] leading-snug line-clamp-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + escHtml(rec.name) + '</div>' +
+        '<div class="mono text-[9px] text-[#c9c2ea]/40 mt-1">' + fmtTime(rec.updated_at) + ' · ' + ((rec.code || '').length / 1000).toFixed(1) + 'k · ' + escHtml((rec.meta && rec.meta.kind) || 'build') + '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-1">' + pipe.map(function(p){
+        const c = LANE_COLOR[p.lane] || '#8b83b8';
+        return '<span class="lane" style="color:' + c + '">' + escHtml((p.agent || '').slice(0,3)) + '·' + escHtml(p.lane || '') + (p.mode === 'live' ? '' : '○') + '</span>';
+      }).join('') + '</div>' +
+      '<div><div class="flex justify-between mono text-[9px] text-[#c9c2ea]/40 mb-1"><span>QUALITY</span><span>' + (rec.score || 0) + '/100</span></div>' +
+      '<div class="qbar"><i style="width:' + (rec.score || 0) + '%;background:linear-gradient(90deg,#6d28d9,' + (rec.score >= 72 ? '#4ade80' : '#fcd34d') + ')"></i></div></div>' +
+      '<div class="flex items-center gap-1.5 pt-1">' +
+        '<button data-a="load" class="pill flex-1 rounded-lg border border-white/10 px-2 py-1.5 text-[9px] orbit tracking-[.16em] text-[#ddd6fb]/80">LOAD</button>' +
+        '<button data-a="sync" class="pill rounded-lg border border-white/10 px-2 py-1.5 text-[#86efac]/70" title="Sync this project"><i data-lucide="cloud-upload" class="w-3 h-3"></i></button>' +
+        '<button data-a="export" class="pill rounded-lg border border-white/10 px-2 py-1.5 text-[#ddd6fb]/60" title="Export HTML"><i data-lucide="download" class="w-3 h-3"></i></button>' +
+        '<button data-a="del" class="pill rounded-lg border border-white/10 px-2 py-1.5 text-[#fca5a5]/70" title="Delete"><i data-lucide="trash-2" class="w-3 h-3"></i></button>' +
+      '</div>';
+
+    card.querySelector('[data-a="load"]').addEventListener('click', function(){
+      try{ Council3Storage.injectIntoWorkspace(rec); openCreations(false); openSandbox(true); }
+      catch(err){ say('Load failed · ' + err.message, '#fca5a5'); }
+    });
+    card.querySelector('[data-a="sync"]').addEventListener('click', async function(){
+      try{ await Council3Storage.syncToCloud([rec]); say('"' + rec.name + '" synced to the cloud.', '#86efac'); }
+      catch(err){ say('Sync failed · ' + err.message, '#fca5a5'); }
+    });
+    card.querySelector('[data-a="export"]').addEventListener('click', function(){
+      const blob = new Blob([rec.code || ''], { type:'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = (rec.name || 'council3').replace(/[^a-z0-9]+/gi, '_').slice(0, 48) + '.html';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+    });
+    card.querySelector('[data-a="del"]').addEventListener('click', async function(){
+      await Council3Storage.removeProject(rec.project_id);
+      say('"' + rec.name + '" removed.', '#fcd34d');
+    });
+    grid.appendChild(card);
+  });
+  lucide.createIcons();
+}
+
+function initCloudUI(){
+  const led = $('#cloudLed'), led2 = $('#cloudLed2');
+
+  Council3Storage.onLog(function(msg, tone){
+    say(msg, tone === 'ok' ? '#86efac' : tone === 'bad' ? '#fca5a5' : tone === 'warn' ? '#fcd34d' : '#cfc7f2');
+  });
+  Council3Storage.onStatus(function(st, text){
+    led.dataset.s = st; led2.dataset.s = st;
+    const out = $('#cloudState');
+    out.textContent = text;
+    out.style.color = st === 'live' ? '#86efac' : st === 'busy' ? '#fcd34d' : '#fca5a5';
+    $('#clusterOut').textContent = Council3Storage.cluster() || '—';
+  });
+  Council3Storage.onDirectory(renderDirectory);
+  Council3Storage.onLocal(function(list){ gallery.items = list; renderCreations(); });
+
+  Council3Workspace.onInject(function(rec){
+    state.aiCode = rec.code || '';
+    ensureAiOption();
+    setArtifact('ai');
+    if(rec.prompt){ input.value = rec.prompt; autoGrow(); applyIntent(false); }
+    if(Array.isArray(rec.pipeline) && rec.pipeline.length === 3){
+      const order = rec.pipeline.map(function(p){
+        return IDS.filter(function(id){ return AGENTS[id].name === p.agent; })[0];
+      }).filter(Boolean);
+      if(order.length === 3){ state.route = order; paintRails(); }
+    }
+    showChip(true);
+    typeOut('Loaded "' + rec.name + '" · ' + (rec.score || 0) + '/100 · hot-reloaded', '#86efac');
+  });
+
+  const cached = Council3Storage.readCachedCredentials();
+  if(cached){ $('#sbUrl').value = cached.url; $('#sbKey').value = cached.anon; }
+  else $('#cfgBody').classList.add('open');
+  const pass = Council3Storage.readCachedPassphrase();
+  if(pass) $('#sbPass').value = pass;
+  $('#schemaSql').textContent = Council3Storage.SCHEMA_SQL;
+  Council3Storage.loadLocal();
+
+  $('#cloudBtn').addEventListener('click', function(e){ e.stopPropagation(); openCloud(!$('#cloudTray').classList.contains('open')); });
+  $('#cloudClose').addEventListener('click', function(){ openCloud(false); });
+  $('#creationsBtn').addEventListener('click', function(e){ e.stopPropagation(); openCreations(true); });
+  $('#creationsClose').addEventListener('click', function(){ openCreations(false); });
+  $('#cfgFold').addEventListener('click', function(){ $('#cfgBody').classList.toggle('open'); });
+  $('#schemaFold').addEventListener('click', function(){ $('#schemaBody').classList.toggle('open'); });
+  $('#copySchema').addEventListener('click', function(){
+    if(navigator.clipboard) navigator.clipboard.writeText(Council3Storage.SCHEMA_SQL).then(function(){ say('Schema SQL copied.', '#86efac'); });
+  });
+  $('#sbShow').addEventListener('click', function(){
+    const k = $('#sbKey');
+    k.type = k.type === 'password' ? 'text' : 'password';
+    this.textContent = k.type === 'password' ? 'SHOW' : 'HIDE';
+  });
+  $('#passShow').addEventListener('click', function(){
+    const p = $('#sbPass');
+    p.type = p.type === 'password' ? 'text' : 'password';
+    this.textContent = p.type === 'password' ? 'SHOW' : 'HIDE';
+  });
+  $('#sbForget').addEventListener('click', function(){
+    Council3Storage.forgetCredentials();
+    $('#sbUrl').value = ''; $('#sbKey').value = ''; $('#sbPass').value = '';
+    $('#cfgBody').classList.add('open');
+    say('Cloud credentials cleared from this device.', '#fcd34d');
+  });
+  $('#sbInit').addEventListener('click', async function(){
+    const btn = this; btn.textContent = 'CONNECTING…';
+    try{
+      await Council3Storage.init($('#sbUrl').value, $('#sbKey').value);
+      if($('#sbPass').value.trim().length >= 4){
+        await Council3Storage.setPassphrase($('#sbPass').value);
+        await Council3Storage.pullFromCloud();
+      }
+      $('#cfgBody').classList.remove('open');
+    }catch(err){ say('Initialization failed · ' + err.message, '#fca5a5'); }
+    btn.textContent = 'INITIALIZE';
+  });
+  let passTimer = null;
+  $('#sbPass').addEventListener('input', function(){
+    clearTimeout(passTimer);
+    const v = this.value;
+    passTimer = setTimeout(function(){ Council3Storage.setPassphrase(v, true).then(function(c){ $('#clusterOut').textContent = c || '—'; }); }, 420);
+  });
+  $('#autoSync').addEventListener('click', function(){
+    const on = this.dataset.on === '1';
+    this.dataset.on = on ? '0' : '1';
+    Council3Storage.setAutoSync(!on);
+  });
+  $('#pushBtn').addEventListener('click', async function(){
+    try{ await Council3Storage.syncCurrentState(); }
+    catch(err){ say('Sync failed · ' + err.message, '#fca5a5'); }
+  });
+  $('#pullBtn').addEventListener('click', async function(){
+    try{ await Council3Storage.pullFromCloud(); }
+    catch(err){ say('Pull failed · ' + err.message, '#fca5a5'); }
+  });
+  $('#creationsPull').addEventListener('click', async function(){
+    try{ await Council3Storage.pullFromCloud(); }
+    catch(err){ say('Pull failed · ' + err.message, '#fca5a5'); }
+  });
+  $('#creationsPush').addEventListener('click', async function(){
+    try{ await Council3Storage.syncAllLocal(); }
+    catch(err){ say('Sync failed · ' + err.message, '#fca5a5'); }
+  });
+  $('#creationSearch').addEventListener('input', function(){ gallery.query = this.value; renderCreations(); });
+  $('#creationSort').addEventListener('change', function(){ gallery.sort = this.value; renderCreations(); });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ openCloud(false); openCreations(false); }
+  });
+  document.addEventListener('click', function(e){
+    if($('#cloudTray').classList.contains('open') && !e.target.closest('#cloudTray') && !e.target.closest('#cloudBtn')) openCloud(false);
+  });
+
+  Council3Storage.autoInit();
+}
+
+/* ==========================================================
+   EVENTS
+   ========================================================== */
+let pinArmed = null;
+function openTray(v){ $('#tray').classList.toggle('open', v); }
+function openSandbox(v){ $('#sandbox').classList.toggle('open', v); if(v) syncMeta(); }
+function autoGrow(){ input.style.height = 'auto'; input.style.height = Math.min(190, input.scrollHeight) + 'px'; }
+
+function bind(){
+  window.addEventListener('pointermove', function(e){ mouse.x = clamp(e.clientX / W, 0, 1); mouse.y = clamp(e.clientY / H, 0, 1); });
+  window.addEventListener('touchmove', function(e){
+    if(e.touches[0]){ mouse.x = clamp(e.touches[0].clientX / W, 0, 1); mouse.y = clamp(e.touches[0].clientY / H, 0, 1); }
+  }, { passive:true });
+  document.addEventListener('mouseleave', function(){ mouse.x = .5; mouse.y = .5; });
+  window.addEventListener('resize', resize);
+
+  $('#trayBtn').addEventListener('click', function(e){ e.stopPropagation(); openTray(!$('#tray').classList.contains('open')); });
+  $('#trayClose').addEventListener('click', function(){ openTray(false); });
+  $('#sandboxBtn').addEventListener('click', function(e){ e.stopPropagation(); openSandbox(true); });
+  $('#sandboxClose').addEventListener('click', function(){ openSandbox(false); });
+  $('#readyChip').addEventListener('click', function(e){ e.stopPropagation(); openSandbox(true); });
+
+  $('#forgeBtn').addEventListener('click', forge);
+  input.addEventListener('keydown', function(e){ if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); forge(); } });
+  input.addEventListener('input', function(){ autoGrow(); applyIntent(true); save(); });
+
+  $('#artifactSel').addEventListener('change', function(){ setArtifact(this.value); });
+  $('#hotSwitch').addEventListener('click', function(){
+    const on = this.dataset.on === '1';
+    this.dataset.on = on ? '0' : '1';
+    state.hot = !on;
+  });
+  $('#runBtn').addEventListener('click', run);
+  $('#codeToggle').addEventListener('click', function(){ $('#codeWrap').classList.toggle('folded'); });
+  $('#exportBtn').addEventListener('click', function(){
+    const blob = new Blob([editor.value], { type:'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = $('#fileName').textContent;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+  });
+  editor.addEventListener('input', function(){
+    syncMeta();
+    if(state.artifact === 'ai') state.aiCode = editor.value;
+    if(window.Council3Workspace) window.Council3Workspace.currentCodePayload = editor.value;
+    if(!state.hot) return;
+    clearTimeout(hotTimer);
+    hotTimer = setTimeout(run, 750);
+  });
+  editor.addEventListener('keydown', function(e){
+    if(e.key === 'Tab'){
+      e.preventDefault();
+      const s = editor.selectionStart, en = editor.selectionEnd;
+      editor.value = editor.value.slice(0, s) + '  ' + editor.value.slice(en);
+      editor.selectionStart = editor.selectionEnd = s + 2;
+    }
+    if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ e.preventDefault(); run(); }
+  });
+
+  $('#artBtn').addEventListener('click', function(){ $('#artFile').click(); });
+  $('#intakeBtn').addEventListener('click', function(){ $('#artFile').click(); });
+  $('#artFile').addEventListener('change', function(){ if(this.files && this.files[0]) ingestFile(this.files[0]); this.value = ''; });
+  $('#veilBtn').addEventListener('click', function(){
+    state.veil = !state.veil;
+    this.querySelector('span').textContent = 'BAKED UI: ' + (state.veil ? 'SOFT' : 'SHOWN');
+    if(rawArt) art = processArt(rawArt);
+    save();
+  });
+  $('#resetBg').addEventListener('click', function(){
+    try{ localStorage.removeItem(STORE_ART); }catch(e){}
+    IDS.forEach(function(id){ state.anchors[id] = { u:AGENTS[id].anchor.u, v:AGENTS[id].anchor.v }; });
+    save();
+    say('Stored artwork and anchors reset · rescanning for council3-bg.jpg', '#cfc7f2');
+    rawArt = null;
+    bootArt();
+  });
+  $('#pinBtn').addEventListener('click', function(e){
+    e.stopPropagation();
+    pinArmed = pinArmed ? IDS[(IDS.indexOf(pinArmed) + 1) % 3] : 'solar';
+    $('#pinTarget').textContent = AGENTS[pinArmed].name;
+    $('#pinTarget').style.color = AGENTS[pinArmed].accent;
+    $('#pinHint').classList.add('show');
+    openTray(false);
+  });
+  document.addEventListener('click', function(e){
+    if(pinArmed){
+      if(e.target.closest('#tray,#cloudTray,#creations,#terminal,#sandbox,header')) return;
+      const p = toArt(e.clientX, e.clientY);
+      state.anchors[pinArmed] = { u:clamp(p.u, 0, 1), v:clamp(p.v, 0, 1) };
+      say(AGENTS[pinArmed].name + ' anchored to the artwork.', AGENTS[pinArmed].accent);
+      const nextIdx = IDS.indexOf(pinArmed) + 1;
+      if(nextIdx < 3){
+        pinArmed = IDS[nextIdx];
+        $('#pinTarget').textContent = AGENTS[pinArmed].name;
+        $('#pinTarget').style.color = AGENTS[pinArmed].accent;
+      } else {
+        pinArmed = null;
+        $('#pinHint').classList.remove('show');
+      }
+      save();
+      return;
+    }
+    if($('#tray').classList.contains('open') && !e.target.closest('#tray')) openTray(false);
+  });
+
+  let dragDepth = 0;
+  window.addEventListener('dragenter', function(e){ e.preventDefault(); dragDepth++; $('#dropVeil').classList.add('on'); });
+  window.addEventListener('dragleave', function(e){ e.preventDefault(); dragDepth = Math.max(0, dragDepth - 1); if(!dragDepth) $('#dropVeil').classList.remove('on'); });
+  window.addEventListener('dragover', function(e){ e.preventDefault(); });
+  window.addEventListener('drop', function(e){
+    e.preventDefault(); dragDepth = 0; $('#dropVeil').classList.remove('on');
+    if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) ingestFile(e.dataTransfer.files[0]);
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ openTray(false); openSandbox(false); pinArmed = null; $('#pinHint').classList.remove('show'); }
+  });
+}
+
+function buildPresets(){
+  const box = $('#presets');
+  PRESETS.forEach(function(p){
+    const b = document.createElement('button');
+    b.className = 'pill rounded-full border border-white/10 px-3 py-1 text-[9px] orbit tracking-[.2em] text-[#ddd6fb]/60 flex items-center gap-1.5';
+    b.innerHTML = '<i data-lucide="' + p.icon + '" class="w-3 h-3"></i>' + p.label;
+    b.addEventListener('click', function(){ input.value = p.text; autoGrow(); applyIntent(true); save(); input.focus(); });
+    box.appendChild(b);
+  });
+}
+
+/* ==========================================================
+   BOOT
+   ========================================================== */
+function boot(){
+  const saved = load();
+  resize();
+  bootArt();
+  buildRails();
+  buildTray();
+  buildPresets();
+  input.value = saved;
+  autoGrow();
+  applyIntent(false);
+  setArtifact(state.artifact);
+  $('#veilBtn').querySelector('span').textContent = 'BAKED UI: ' + (state.veil ? 'SOFT' : 'SHOWN');
+  lucide.createIcons();
+  bind();
+  initCloudUI();
+  requestAnimationFrame(frame);
+  setTimeout(function(){ typeOut('Council3 online · three essences await your directive', '#e9d5ff'); }, 700);
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+
+})();
+</script>
+</body>
+</html>
