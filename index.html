@@ -438,6 +438,14 @@ const LS_LOCAL = 'council3.creations.v1';
 const MAX_LOCAL = 48;
 const MAX_CODE = 320000;
 
+/* ---------------------------------------------------------------------------
+   BAKED CREDENTIALS
+   Filled by Council3Storage.bakeCredentials() at boot so the app connects to
+   this Supabase instance without any typing. Overridden by whatever the user
+   saves through the configuration panel.
+   --------------------------------------------------------------------------- */
+const BAKED = { url:'', anon:'' };
+
 const SCHEMA_SQL = [
   '-- run once in the Supabase SQL editor',
   'create table if not exists council3_projects (',
@@ -628,7 +636,8 @@ async function init(url, anon, opts){
 }
 
 async function autoInit(){
-  const cached = readCachedCredentials();
+  const cached = readCachedCredentials() ||
+                 (BAKED.url && BAKED.anon ? { url:BAKED.url, anon:BAKED.anon } : null);
   const pass = readCachedPassphrase();
   if(pass) await setPassphrase(pass, true);
   if(!cached) return false;
@@ -884,6 +893,12 @@ const API = {
   autoInit:autoInit,
   forgetCredentials:forgetCredentials,
   readCachedCredentials:readCachedCredentials,
+  bakeCredentials:function(url, anon){
+    BAKED.url = String(url || '').trim().replace(/\/+$/, '');
+    BAKED.anon = String(anon || '').trim();
+    return API;
+  },
+  baked:function(){ return BAKED.url && BAKED.anon ? { url:BAKED.url, anon:BAKED.anon } : null; },
   readCachedPassphrase:readCachedPassphrase,
   hashPassphrase:hashPassphrase,
   setPassphrase:setPassphrase,
@@ -924,6 +939,10 @@ if(typeof module !== 'undefined' && module.exports) module.exports = API;
 /* ==========================================================
    CONFIG
    ========================================================== */
+const BAKED_CLOUD = {
+  url:'https://vjdjdiaxzlfmytmstmas.supabase.co',
+  anon:'sb_publishable_aMcwyiQM8CLEdTvap-3yfw_qvaOr7pD'
+};
 const ART_CANDIDATES = [
   'council3-bg.jpg','council3-bg.png','council3-bg.jpeg','council3-bg.webp',
   'council3.jpg','council3.png','background.jpg','background.png','bg.jpg','bg.png',
@@ -2298,7 +2317,7 @@ function initCloudUI(){
     typeOut('Loaded "' + rec.name + '" · ' + (rec.score || 0) + '/100 · hot-reloaded', '#86efac');
   });
 
-  const cached = Council3Storage.readCachedCredentials();
+  const cached = Council3Storage.readCachedCredentials() || Council3Storage.baked();
   if(cached){ $('#sbUrl').value = cached.url; $('#sbKey').value = cached.anon; }
   else $('#cfgBody').classList.add('open');
   const pass = Council3Storage.readCachedPassphrase();
@@ -2380,6 +2399,7 @@ function initCloudUI(){
     if($('#cloudTray').classList.contains('open') && !e.target.closest('#cloudTray') && !e.target.closest('#cloudBtn')) openCloud(false);
   });
 
+  Council3Storage.bakeCredentials(BAKED_CLOUD.url, BAKED_CLOUD.anon);
   Council3Storage.autoInit();
 }
 
