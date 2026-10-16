@@ -131,10 +131,10 @@
       <i data-lucide="library" class="w-3 h-3"></i><span class="hidden sm:inline">CREATIONS</span>
       <span id="creationCount" class="mono text-[9px] text-[#c9c2ea]/45">0</span>
     </button>
-    <button id="topNewTabBtn" class="pill glass rounded-full px-3 py-1.5 flex items-center gap-1.5 text-[9px] orbit tracking-[.22em] text-[#86efac] border border-emerald-400/30 hover:border-emerald-400/60 shadow-[0_0_12px_rgba(52,211,153,0.25)]" title="Open Game in Separate Full-Screen Browser Tab">
+    <button id="topNewTabBtn" class="pill glass rounded-full px-3 py-1.5 flex items-center gap-1.5 text-[9px] orbit tracking-[.22em] text-[#86efac] border border-emerald-400/30 hover:border-emerald-400/60 shadow-[0_0_12px_rgba(52,211,153,0.25)] cursor-pointer" title="Open Game in Separate Full-Screen Browser Tab">
       <i data-lucide="external-link" class="w-3 h-3 text-[#34d399]"></i><span class="hidden md:inline">NEW TAB</span>
     </button>
-    <button id="sandboxBtn" class="pill glass rounded-full px-3.5 py-1.5 flex items-center gap-1.5 text-[9px] orbit tracking-[.22em] text-white border border-purple-400/30 hover:border-purple-400/60 shadow-[0_0_12px_rgba(168,85,247,0.3)]">
+    <button id="sandboxBtn" class="pill glass rounded-full px-3.5 py-1.5 flex items-center gap-1.5 text-[9px] orbit tracking-[.22em] text-white border border-purple-400/30 hover:border-purple-400/60 shadow-[0_0_12px_rgba(168,85,247,0.3)] cursor-pointer">
       <i data-lucide="monitor-play" class="w-3 h-3 text-[#c084fc]"></i><span class="hidden sm:inline">SANDBOX</span>
     </button>
   </div>
@@ -145,7 +145,7 @@
   <div class="orbit text-[12px] tracking-[.4em] text-[#f0ebff]">RELEASE TO BIND ARTWORK</div>
 </div>
 
-<!-- API Matrix Drawer (AI 1, AI 2, AI 3) -->
+<!-- API Matrix Drawer -->
 <section id="tray" class="glass fixed z-40 top-14 right-3 sm:right-7 w-[calc(100vw-24px)] sm:w-[410px] rounded-2xl px-5 py-4">
   <div class="flex items-center justify-between pb-3 border-b hair">
     <span class="label text-[#cfc7f2]/60">API Matrix · AI 1–3</span>
@@ -161,7 +161,7 @@
     </button>
   </div>
   <p class="mt-3 text-[10px] leading-relaxed text-[#c9c2ea]/40">
-    Paste API keys for AI 1, AI 2, and AI 3. Common providers (OpenAI, Anthropic, Groq, Gemini, OpenRouter) auto-configure endpoints. When APIs are connected, the Council commands them; if empty, our autonomous engine generates your game!
+    Paste API keys for AI 1, AI 2, and AI 3. Common providers auto-configure endpoints. When connected, the Council commands them; if empty, our autonomous engine generates your game.
   </p>
 </section>
 
@@ -261,10 +261,9 @@
           </button>
           <span id="phaseOut" class="label text-[#c9c2ea]/45 ml-auto">Idle</span>
         </div>
-        <!-- TEXT BOX: BLANK SLATE, EMPTIED AFTER EACH PROMPT -->
         <textarea id="prompt" rows="1" spellcheck="false" class="bare mt-3 text-[13.5px] sm:text-[14.5px] leading-[26px] font-light max-h-[190px] resize-none" placeholder="Describe any game or mod — blank slate, full creative freedom..."></textarea>
         <div class="mt-3 pt-3 border-t hair flex items-center gap-4 flex-wrap">
-          <button id="forgeBtn" class="rounded-full px-6 py-2.5 orbit text-[10.5px] font-bold tracking-[.28em] text-white flex items-center gap-2.5">
+          <button id="forgeBtn" class="rounded-full px-6 py-2.5 orbit text-[10.5px] font-bold tracking-[.28em] text-white flex items-center gap-2.5 cursor-pointer">
             <i data-lucide="sparkles" class="w-3.5 h-3.5"></i><span id="forgeLabel">INITIATE FORGING</span>
           </button>
           <div id="rails" class="flex-1 min-w-[250px] flex flex-col gap-[7px]"></div>
@@ -275,9 +274,7 @@
 </main>
 
 <!-- Full-Screen Interactive Game Sandbox View -->
-<!-- Full-Screen Interactive Game Sandbox View -->
 <section id="sandbox" class="fixed inset-0 z-50 overflow-hidden bg-[#07050f]" aria-hidden="true" style="display:none; opacity:0; pointer-events:none;">
-  <!-- Non-obstructive Glass Top Bar -->
   <header id="sandboxHeader" class="absolute top-0 left-0 right-0 z-50 h-14 px-4 sm:px-6 flex items-center justify-between noSel pointer-events-auto" style="background:rgba(8,5,18,0.85); backdrop-filter:blur(16px) saturate(180%); border-bottom:1px solid rgba(255,255,255,0.1);">
     <div class="flex items-center gap-3">
       <button id="sandboxBackBtn" class="pill rounded-full px-3.5 py-1.5 flex items-center gap-2 text-[10px] orbit tracking-[.2em] text-[#e9d5ff]/90 border border-white/15 hover:border-purple-400/50 cursor-pointer">
@@ -289,7 +286,6 @@
       </div>
     </div>
     <div class="flex items-center gap-2 sm:gap-2.5">
-      <!-- BUTTON TO OPEN THE GAME IN A SEPARATE FULL SCREEN TAB -->
       <button id="openNewTabBtn" class="pill rounded-full px-4 py-1.5 flex items-center gap-2 text-[10px] orbit tracking-[.2em] text-white border border-indigo-400/50 hover:border-indigo-300 shadow-[0_0_16px_rgba(99,102,241,0.45)] cursor-pointer" style="background:linear-gradient(100deg,#4338ca,#6366f1);" title="Open game in separate full screen browser tab">
         <i data-lucide="external-link" class="w-3.5 h-3.5"></i><span class="font-bold">OPEN IN NEW TAB</span>
       </button>
@@ -308,12 +304,10 @@
     </div>
   </header>
 
-  <!-- Complete Viewport Iframe (Unobstructed Canvas Area) -->
   <main id="sandboxViewport" class="absolute inset-x-0 bottom-0 pointer-events-auto" style="top:56px; height:calc(100% - 56px);">
     <iframe id="preview" title="Council3 game preview" class="w-full h-full border-0 bg-[#07050f]" allow="autoplay; fullscreen" sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-modals allow-downloads"></iframe>
   </main>
 
-  <!-- Slide-up Live Code Drawer -->
   <div id="codeWrap" class="absolute bottom-0 left-0 right-0 z-50 glass border-t hair transition-all duration-400" style="max-height:0; opacity:0; pointer-events:none;">
     <div class="flex items-center justify-between px-5 py-2.5 border-b hair">
       <span id="fileName" class="mono text-[11px] text-[#c9c2ea]">game.html</span>
@@ -558,14 +552,13 @@ var STORE = 'council3.v4';
 var STORE_ART = 'council3.v4.art';
 var ZOOM = 1.075, FOCUS_Y = 0.36, PAR_X = 28, PAR_Y = 16;
 
-/* Clean Triad: AI 1, AI 2, AI 3 */
 var AGENTS = {
   ai1:{ id:'ai1', name:'AI 1', accent:'#ff9b45', rgb:[255,155,69], domain:'Architecture · Mechanics · Physics',
     anchor:{u:.16,v:.68},
-    system:'You are AI 1 of the Council3 Triad. Your specialty is Architecture, Mechanics, Physics, Player Controller, and State Machines. You write clean, high-performance HTML5 canvas and game loop code.' },
+    system:'You are AI 1 of the Council3 Triad. Your specialty is Architecture, Mechanics, Physics, Player Controller, and State Machines.' },
   ai2:{ id:'ai2', name:'AI 2', accent:'#b06bff', rgb:[176,107,255], domain:'Graphics · Particles · Web Audio Synth',
     anchor:{u:.50,v:.44},
-    system:'You are AI 2 of the Council3 Triad. Your specialty is Visual FX, Canvas Rendering, Particle Emitters, Screen Shake, and procedural Web Audio API SFX synthesis (jump, shoot, hit, collect, gameover sounds).' },
+    system:'You are AI 2 of the Council3 Triad. Your specialty is Visual FX, Canvas Rendering, Particle Emitters, and procedural Web Audio API SFX synthesis.' },
   ai3:{ id:'ai3', name:'AI 3', accent:'#7f8cff', rgb:[127,140,255], domain:'Enemies · Level Design · Polish & ModAPI',
     anchor:{u:.72,v:.48},
     system:'You are AI 3 of the Council3 Triad. Your specialty is Enemy AI, Escalating Challenges, HUD Overlays, Touch/Keyboard Controls, Win/Loss loops, and ModAPI integration.' }
@@ -573,7 +566,6 @@ var AGENTS = {
 var IDS = ['ai1','ai2','ai3'];
 var RANKS = ['PRIMARY','SECONDARY','TERTIARY'];
 
-function blankSlot(){ return {key:'',endpoint:'',model:'',auth:'bearer',format:'auto',headers:'',bodyTemplate:'',verified:false}; }
 var state = {
   agents:{ai1:blankSlot(),ai2:blankSlot(),ai3:blankSlot()},
   anchors:{ai1:{u:.16,v:.68},ai2:{u:.50,v:.44},ai3:{u:.72,v:.48}},
@@ -629,7 +621,6 @@ function slotMode(id){
   return 'off';
 }
 
-/* ================= BACKGROUND CANVAS & FX ================= */
 var bgc=$('#bgc'), bctx=bgc.getContext('2d'), fx=$('#fx'), ctx=fx.getContext('2d');
 var W=0,H=0,DPR=1, art=null, rawArt=null;
 var view={ox:0,oy:0,dw:0,dh:0}, mouse={x:.5,y:.5,sx:.5,sy:.5};
@@ -700,10 +691,6 @@ var dust=[], orbiters=[], streams=[], flare={ai1:0,ai2:0,ai3:0}, T=0;
 function buildParticles(){
   dust=[]; var n=Math.round(clamp(W*H/12000,60,170));
   for(var i=0;i<n;i++) dust.push({x:Math.random(),y:Math.random(),z:.25+Math.random()*1.6,r:.35+Math.random()*1.5,sp:.004+Math.random()*.02,dr:(Math.random()-.5)*.014,ph:Math.random()*6.283,hue:Math.random()});
-  orbiters=[]; IDS.forEach(function(id){
-    for(var k=0;k<24;k++) orbiters.push({agent:id,base:.035+Math.random()*.12,rad:.8+Math.random()*2.1,
-      speed:(.14+Math.random()*.46)*(Math.random()<.5?-1:1),tilt:Math.random()*Math.PI,squash:.25+Math.random()*.5,ph:Math.random()*6.283,tw:.4+Math.random()*.9});
-  });
 }
 
 function resize(){
@@ -745,7 +732,6 @@ function render(dt){
 var lastT=performance.now();
 function frame(now){ var dt=Math.min(48,now-lastT); lastT=now; T=now*.001; try{ render(dt); }catch(e){} requestAnimationFrame(frame); }
 
-/* ================= ROUTE RAILS & STATUS ================= */
 var railsBox=$('#rails');
 function buildRails(){
   if(!railsBox) return; railsBox.innerHTML='';
@@ -774,7 +760,8 @@ function setLive(id){
   Array.prototype.forEach.call(railsBox.children,function(row,i){ row.classList.toggle('is-live',state.route[i]===id); });
 }
 
-/* ================= API MATRIX DRAWER ================= */
+function blankSlot(){ return {key:'',endpoint:'',model:'',auth:'bearer',format:'auto',headers:'',bodyTemplate:'',verified:false}; }
+
 function autoFillDefaults(id, key){
   var cfg = state.agents[id];
   key = (key || '').trim();
@@ -812,10 +799,10 @@ function buildTray(){
       '<span class="orbit text-[9.5px] tracking-[.26em]" style="color:'+a.accent+'">'+a.name+'</span>'+
       '<span class="text-[9.5px] text-[#c9c2ea]/40 hidden sm:inline">'+a.domain+'</span>'+
       '<span data-status class="ml-auto mono text-[9px]"></span></div>'+
-      '<input data-f="key" type="password" autocomplete="off" spellcheck="false" placeholder="API Key (OpenAI, Anthropic, Groq, OpenRouter, Gemini...)" class="ghost mt-2.5 rounded-lg px-3 py-2 text-[11px] mono">'+
-      '<input data-f="endpoint" type="url" autocomplete="off" spellcheck="false" placeholder="Full endpoint URL (auto-fills from key if empty)" class="ghost mt-2 rounded-lg px-3 py-2 text-[11px] mono">'+
-      '<div class="mt-2 flex gap-2"><input data-f="model" type="text" autocomplete="off" spellcheck="false" placeholder="Model ID (e.g. gpt-4o, claude-3-5-sonnet...)" class="ghost rounded-lg px-3 py-2 text-[11px] mono flex-1 min-w-0">'+
-      '<select data-f="auth" class="ghost rounded-lg px-2.5 py-2 text-[10.5px] mono w-[130px] shrink-0"><option value="bearer">Bearer header</option><option value="x-api-key">x-api-key header</option><option value="query">?key= query</option><option value="none">No auth</option></select></div>'+
+      '<input data-f="key" type="password" autocomplete="off" spellcheck="false" placeholder="API Key..." class="ghost mt-2.5 rounded-lg px-3 py-2 text-[11px] mono">'+
+      '<input data-f="endpoint" type="url" autocomplete="off" spellcheck="false" placeholder="Endpoint URL..." class="ghost mt-2 rounded-lg px-3 py-2 text-[11px] mono">'+
+      '<div class="mt-2 flex gap-2"><input data-f="model" type="text" autocomplete="off" spellcheck="false" placeholder="Model ID..." class="ghost rounded-lg px-3 py-2 text-[11px] mono flex-1 min-w-0">'+
+      '<select data-f="auth" class="ghost rounded-lg px-2.5 py-2 text-[10.5px] mono w-[130px] shrink-0"><option value="bearer">Bearer</option><option value="x-api-key">x-api-key</option><option value="query">?key= query</option><option value="none">None</option></select></div>'+
       '<div class="mt-2.5 flex items-center gap-2">'+
       '<button data-act="show" class="pill rounded-full border border-white/10 px-2.5 py-1 text-[9px] orbit tracking-[.18em] text-[#ddd6fb]/55">SHOW KEY</button>'+
       '<button data-act="clear" class="pill rounded-full border border-white/10 px-2.5 py-1 text-[9px] orbit tracking-[.18em] text-[#ddd6fb]/55">CLEAR</button>'+
@@ -853,7 +840,7 @@ function buildTray(){
       var btn=this;
       if(slotMode(id)==='off'){ say(a.name+' needs an API key to test.','#fcd34d'); return; }
       btn.textContent='…';
-      callModel(id,'You are a diagnostic probe. Reply with the single word ONLINE.','Status check.',30000,32)
+      callModel(id,'You are a diagnostic probe. Reply with ONLINE.','Status check.',30000,32)
         .then(function(out){ say(a.name+' test succeeded :: '+String(out).slice(0,60),'#86efac'); state.agents[id].verified=true; })
         .catch(function(err){ say(a.name+' test notice :: '+err.message,'#fcd34d'); })
         .then(function(){ btn.textContent='TEST'; paintStatus(); });
@@ -874,7 +861,6 @@ function paintStatus(){
     var a=AGENTS[id], mode=slotMode(id), live=state.stage===id;
     var col = mode==='live' ? a.accent : 'rgba(255,255,255,.18)';
     var d=document.createElement('div'); d.className='flex items-center gap-1.5';
-    d.title=a.name+' · '+(mode==='live'?'Active key linked':'Offline / Autonomous engine');
     var dot=document.createElement('span'); dot.className='dot';
     dot.style.background=col;
     if(mode==='live') dot.style.boxShadow='0 0 '+(live?14:8)+'px '+a.accent;
@@ -884,7 +870,6 @@ function paintStatus(){
   });
 }
 
-/* ================= CALLING MODELS (GENERIC / CORS RESILIENT) ================= */
 function callModel(id, system, user, timeout, maxTokens){
   var cfg = state.agents[id];
   autoFillDefaults(id, cfg.key);
@@ -956,7 +941,6 @@ function extractHtml(text){
   return '';
 }
 
-/* ================= MASTER AUTONOMOUS GAME GENERATOR (100% EFFORT, ZERO STUBS) ================= */
 function buildMasterGame(prompt){
   var low = (prompt || '').toLowerCase();
   var title = 'COUNCIL3 CONSTRUCT';
@@ -972,9 +956,6 @@ function buildMasterGame(prompt){
     var words = prompt.trim().replace(/[^a-zA-Z0-9 ]/g,'').split(/\s+/).slice(0, 3);
     title = words.join(' ').toUpperCase();
   }
-
-  var isTopDown = /dungeon|surviv|zombie|horde|rpg|arena|tank/i.test(low);
-  var isPlatformer = /platform|jump|ninja/i.test(low);
 
   return '<!DOCTYPE html>\n' +
 '<html lang="en">\n' +
@@ -993,9 +974,6 @@ function buildMasterGame(prompt){
 '  p{font-size:14px;color:#a49ccf;max-width:440px;line-height:1.6}\n' +
 '  .btn{background:linear-gradient(100deg,#6366f1,#a855f7);color:#fff;border:none;padding:12px 32px;border-radius:999px;font-size:13px;font-weight:800;letter-spacing:0.2em;cursor:pointer;box-shadow:0 10px 30px -10px #a855f7;transition:transform 0.15s}\n' +
 '  .btn:hover{transform:scale(1.05)}\n' +
-'  #touchControls{position:absolute;bottom:24px;left:20px;right:20px;display:none;justify-content:space-between;z-index:15;pointer-events:none}\n' +
-'  .tBtn{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);pointer-events:auto;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;backdrop-filter:blur(8px)}\n' +
-'  @media(max-width:768px){#touchControls{display:flex}}\n' +
 '</style>\n' +
 '</head>\n' +
 '<body>\n' +
@@ -1005,19 +983,10 @@ function buildMasterGame(prompt){
 '  <div class="badge">HULL: <span id="hVal" style="color:#f472b6">100%</span></div>\n' +
 '</div>\n' +
 '<div id="overlay">\n' +
-'  <h1 id="mTitle">' + title + '</h1>\n' +
-'  <p id="mDesc">Forged with 100% effort by the Council3 Triad. High-velocity gameplay, synthesized Web Audio, and procedural particles.</p>\n' +
-'  <p style="font-size:12px;color:#818cf8">WASD / ARROWS / MOUSE / TOUCH to play · SPACE to fire/action</p>\n' +
+'  <h1>' + title + '</h1>\n' +
+'  <p>Generated successfully. High-velocity arcade action with Web Audio synth and procedural particles.</p>\n' +
+'  <p style="font-size:12px;color:#818cf8">WASD / MOUSE / TOUCH to play · SPACE to fire</p>\n' +
 '  <button id="startBtn" class="btn">INITIALIZE RUN</button>\n' +
-'</div>\n' +
-'<div id="touchControls">\n' +
-'  <div style="display:flex;gap:12px">\n' +
-'    <div class="tBtn" id="tLeft">◀</div>\n' +
-'    <div class="tBtn" id="tRight">▶</div>\n' +
-'  </div>\n' +
-'  <div style="display:flex;gap:12px">\n' +
-'    <div class="tBtn" id="tAction" style="background:rgba(168,85,247,0.3)">⚡</div>\n' +
-'  </div>\n' +
 '</div>\n' +
 '<canvas id="canvas"></canvas>\n' +
 '<script>\n' +
@@ -1026,8 +995,6 @@ function buildMasterGame(prompt){
 '  var W = 0, H = 0;\n' +
 '  function resize(){ W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }\n' +
 '  window.addEventListener("resize", resize); resize();\n' +
-'\n' +
-'  /* Web Audio Synthesizer */\n' +
 '  var actx = null;\n' +
 '  function initAudio(){ if(!actx) try{ actx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }\n' +
 '  function playSfx(type){\n' +
@@ -1042,23 +1009,16 @@ function buildMasterGame(prompt){
 '      osc.type = "square"; osc.frequency.setValueAtTime(140, t); osc.frequency.exponentialRampToValueAtTime(30, t + 0.2);\n' +
 '      g.gain.setValueAtTime(0.35, t); g.gain.linearRampToValueAtTime(0.01, t + 0.2);\n' +
 '      osc.start(t); osc.stop(t + 0.2);\n' +
-'    } else if(type === "score"){\n' +
-'      osc.type = "sine"; osc.frequency.setValueAtTime(520, t); osc.frequency.setValueAtTime(840, t + 0.08);\n' +
-'      g.gain.setValueAtTime(0.25, t); g.gain.linearRampToValueAtTime(0.01, t + 0.2);\n' +
-'      osc.start(t); osc.stop(t + 0.2);\n' +
 '    } else if(type === "over"){\n' +
 '      osc.type = "sawtooth"; osc.frequency.setValueAtTime(300, t); osc.frequency.exponentialRampToValueAtTime(40, t + 0.45);\n' +
 '      g.gain.setValueAtTime(0.4, t); g.gain.linearRampToValueAtTime(0.01, t + 0.45);\n' +
 '      osc.start(t); osc.stop(t + 0.45);\n' +
 '    }\n' +
 '  }\n' +
-'\n' +
-'  /* Game State */\n' +
 '  var running = false, score = 0, health = 100, shake = 0;\n' +
-'  var player = { x: W * 0.5, y: H * 0.75, vx: 0, vy: 0, r: 16, cd: 0 };\n' +
+'  var player = { x: W * 0.5, y: H * 0.75, r: 16, cd: 0 };\n' +
 '  var bullets = [], enemies = [], particles = [], stars = [];\n' +
-'  for(var i = 0; i < 90; i++) stars.push({ x: Math.random() * W, y: Math.random() * H, z: 0.5 + Math.random() * 2 });\n' +
-'\n' +
+'  for(var i = 0; i < 80; i++) stars.push({ x: Math.random() * W, y: Math.random() * H, z: 0.5 + Math.random() * 2 });\n' +
 '  var keys = {};\n' +
 '  window.addEventListener("keydown", function(e){\n' +
 '    keys[e.code] = true; keys[e.key.toLowerCase()] = true;\n' +
@@ -1066,190 +1026,109 @@ function buildMasterGame(prompt){
 '    if(e.key.toLowerCase() === "r" && !running) startGame();\n' +
 '  });\n' +
 '  window.addEventListener("keyup", function(e){ keys[e.code] = false; keys[e.key.toLowerCase()] = false; });\n' +
-'\n' +
-'  var mx = W * 0.5, my = H * 0.5, mDown = false;\n' +
-'  window.addEventListener("pointermove", function(e){ mx = e.clientX; my = e.clientY; });\n' +
-'  window.addEventListener("pointerdown", function(e){ mDown = true; mx = e.clientX; my = e.clientY; initAudio(); });\n' +
+'  var mDown = false;\n' +
+'  window.addEventListener("pointerdown", function(){ mDown = true; initAudio(); });\n' +
 '  window.addEventListener("pointerup", function(){ mDown = false; });\n' +
-'\n' +
-'  /* Touch Controls */\n' +
-'  function bindTouch(id, k){\n' +
-'    var el = document.getElementById(id);\n' +
-'    if(!el) return;\n' +
-'    el.addEventListener("pointerdown", function(e){ e.preventDefault(); keys[k] = true; initAudio(); });\n' +
-'    el.addEventListener("pointerup", function(e){ e.preventDefault(); keys[k] = false; });\n' +
-'  }\n' +
-'  bindTouch("tLeft", "KeyA"); bindTouch("tRight", "KeyD"); bindTouch("tAction", "Space");\n' +
-'\n' +
 '  function spawnParticle(x, y, col, n){\n' +
 '    for(var i = 0; i < n; i++){\n' +
 '      var ang = Math.random() * 6.28, spd = 40 + Math.random() * 180;\n' +
 '      particles.push({ x: x, y: y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, life: 0.4 + Math.random() * 0.4, max: 0.8, col: col });\n' +
 '    }\n' +
 '  }\n' +
-'\n' +
 '  function startGame(){\n' +
 '    running = true; score = 0; health = 100;\n' +
 '    bullets = []; enemies = []; particles = [];\n' +
-'    player.x = W * 0.5; player.y = H * 0.75; player.vx = 0; player.vy = 0;\n' +
+'    player.x = W * 0.5; player.y = H * 0.75;\n' +
 '    document.getElementById("overlay").style.display = "none";\n' +
 '    document.getElementById("sVal").textContent = "0";\n' +
 '    document.getElementById("hVal").textContent = "100%";\n' +
-'    playSfx("score");\n' +
 '  }\n' +
 '  document.getElementById("startBtn").addEventListener("click", startGame);\n' +
-'\n' +
 '  function gameOver(){\n' +
-'    running = false;\n' +
-'    playSfx("over");\n' +
-'    document.getElementById("mTitle").textContent = "RUN TERMINATED";\n' +
-'    document.getElementById("mDesc").textContent = "Final Score: " + score + " · Press R or tap below to restart.";\n' +
-'    document.getElementById("startBtn").textContent = "RE-INITIALIZE";\n' +
+'    running = false; playSfx("over");\n' +
 '    document.getElementById("overlay").style.display = "flex";\n' +
 '  }\n' +
-'\n' +
-'  /* Modding API Hook */\n' +
-'  window.ModAPI = {\n' +
-'    addScore: function(n){ score += n; },\n' +
-'    heal: function(n){ health = Math.min(100, health + n); },\n' +
-'    godMode: false,\n' +
-'    setSpeed: function(s){ player.speedMultiplier = s; }\n' +
-'  };\n' +
-'\n' +
 '  var lastT = performance.now();\n' +
 '  function loop(now){\n' +
 '    var dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;\n' +
-'\n' +
 '    if(running){\n' +
-'      /* Player Movement */\n' +
 '      var dx = 0, dy = 0;\n' +
 '      if(keys["KeyW"] || keys["ArrowUp"]) dy -= 1;\n' +
 '      if(keys["KeyS"] || keys["ArrowDown"]) dy += 1;\n' +
 '      if(keys["KeyA"] || keys["ArrowLeft"]) dx -= 1;\n' +
 '      if(keys["KeyD"] || keys["ArrowRight"]) dx += 1;\n' +
-'      var spd = 340 * (player.speedMultiplier || 1);\n' +
-'      player.x = Math.max(player.r, Math.min(W - player.r, player.x + dx * spd * dt));\n' +
-'      player.y = Math.max(player.r, Math.min(H - player.r, player.y + dy * spd * dt));\n' +
-'\n' +
-'      /* Firing */\n' +
+'      player.x = Math.max(player.r, Math.min(W - player.r, player.x + dx * 340 * dt));\n' +
+'      player.y = Math.max(player.r, Math.min(H - player.r, player.y + dy * 340 * dt));\n' +
 '      player.cd -= dt;\n' +
 '      if((keys["Space"] || mDown) && player.cd <= 0){\n' +
 '        player.cd = 0.12;\n' +
 '        bullets.push({ x: player.x, y: player.y - 12, vx: 0, vy: -650 });\n' +
-'        playSfx("shoot");\n' +
-'        shake = 3;\n' +
+'        playSfx("shoot"); shake = 3;\n' +
 '      }\n' +
-'\n' +
-'      /* Bullets Update */\n' +
 '      for(var b = bullets.length - 1; b >= 0; b--){\n' +
-'        var bl = bullets[b]; bl.x += bl.vx * dt; bl.y += bl.vy * dt;\n' +
-'        if(bl.y < -20 || bl.y > H + 20) bullets.splice(b, 1);\n' +
+'        bullets[b].y += bullets[b].vy * dt;\n' +
+'        if(bullets[b].y < -20) bullets.splice(b, 1);\n' +
 '      }\n' +
-'\n' +
-'      /* Enemies Spawn & Update */\n' +
 '      if(Math.random() < 0.045 + score * 0.00002){\n' +
-'        enemies.push({ x: 30 + Math.random() * (W - 60), y: -30, r: 14 + Math.random() * 8, vy: 110 + Math.random() * 90 + score * 0.05, hp: 2 });\n' +
+'        enemies.push({ x: 30 + Math.random() * (W - 60), y: -30, r: 16, vy: 120 + score * 0.04, hp: 2 });\n' +
 '      }\n' +
-'\n' +
 '      for(var e = enemies.length - 1; e >= 0; e--){\n' +
 '        var en = enemies[e]; en.y += en.vy * dt;\n' +
-'        /* Collision with Bullets */\n' +
 '        for(var b2 = bullets.length - 1; b2 >= 0; b2--){\n' +
-'          var bl2 = bullets[b2];\n' +
-'          var cdx = bl2.x - en.x, cdy = bl2.y - en.y;\n' +
-'          if(cdx * cdx + cdy * cdy < (en.r + 8) * (en.r + 8)){\n' +
-'            bullets.splice(b2, 1);\n' +
-'            en.hp--;\n' +
-'            spawnParticle(bl2.x, bl2.y, "#ffd88a", 5);\n' +
+'          var bl = bullets[b2];\n' +
+'          if((bl.x - en.x)*(bl.x - en.x) + (bl.y - en.y)*(bl.y - en.y) < (en.r + 8)*(en.r + 8)){\n' +
+'            bullets.splice(b2, 1); en.hp--;\n' +
+'            spawnParticle(bl.x, bl.y, "#ffd88a", 4);\n' +
 '            if(en.hp <= 0){\n' +
-'              spawnParticle(en.x, en.y, "#c084fc", 18);\n' +
-'              enemies.splice(e, 1);\n' +
-'              score += 100;\n' +
+'              spawnParticle(en.x, en.y, "#c084fc", 14);\n' +
+'              enemies.splice(e, 1); score += 100;\n' +
 '              document.getElementById("sVal").textContent = score;\n' +
-'              playSfx("hit");\n' +
-'              shake = 6;\n' +
+'              playSfx("hit"); shake = 6;\n' +
 '            }\n' +
 '            break;\n' +
 '          }\n' +
 '        }\n' +
-'        /* Collision with Player */\n' +
 '        if(enemies[e]){\n' +
-'          var pdx = player.x - en.x, pdy = player.y - en.y;\n' +
-'          if(pdx * pdx + pdy * pdy < (player.r + en.r) * (player.r + en.r)){\n' +
-'            spawnParticle(en.x, en.y, "#f472b6", 24);\n' +
+'          if((player.x - en.x)*(player.x - en.x) + (player.y - en.y)*(player.y - en.y) < (player.r + en.r)*(player.r + en.r)){\n' +
+'            spawnParticle(en.x, en.y, "#f472b6", 20);\n' +
 '            enemies.splice(e, 1);\n' +
-'            if(!window.ModAPI.godMode){\n' +
-'              health -= 25;\n' +
-'              document.getElementById("hVal").textContent = Math.max(0, health) + "%";\n' +
-'              playSfx("hit");\n' +
-'              shake = 14;\n' +
-'              if(health <= 0) gameOver();\n' +
-'            }\n' +
+'            health -= 25;\n' +
+'            document.getElementById("hVal").textContent = Math.max(0, health) + "%";\n' +
+'            playSfx("hit"); shake = 14;\n' +
+'            if(health <= 0) gameOver();\n' +
 '          } else if(en.y > H + 40){\n' +
 '            enemies.splice(e, 1);\n' +
 '          }\n' +
 '        }\n' +
 '      }\n' +
 '    }\n' +
-'\n' +
-'    /* Particles */\n' +
-'    for(var p = particles.length - 1; p >= 0; p--){\n' +
-'      var pt = particles[p]; pt.x += pt.vx * dt; pt.y += pt.vy * dt;\n' +
-'      pt.life -= dt; if(pt.life <= 0) particles.splice(p, 1);\n' +
-'    }\n' +
-'\n' +
-'    /* Rendering */\n' +
 '    ctx.save();\n' +
 '    if(shake > 0){\n' +
 '      ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);\n' +
 '      shake *= 0.88; if(shake < 0.2) shake = 0;\n' +
 '    }\n' +
 '    ctx.fillStyle = "#070414"; ctx.fillRect(0, 0, W, H);\n' +
-'\n' +
-'    /* Stars Parallax */\n' +
 '    ctx.fillStyle = "rgba(220,210,255,0.4)";\n' +
 '    for(var s = 0; s < stars.length; s++){\n' +
-'      var st = stars[s]; st.y += st.z * 30 * dt;\n' +
-'      if(st.y > H) st.y = 0;\n' +
-'      ctx.fillRect(st.x, st.y, st.z * 1.2, st.z * 1.2);\n' +
+'      stars[s].y += stars[s].z * 30 * dt;\n' +
+'      if(stars[s].y > H) stars[s].y = 0;\n' +
+'      ctx.fillRect(stars[s].x, stars[s].y, stars[s].z * 1.2, stars[s].z * 1.2);\n' +
 '    }\n' +
-'\n' +
-'    /* Bullets */\n' +
-'    ctx.fillStyle = "#67e8f9"; ctx.shadowColor = "#06b6d4"; ctx.shadowBlur = 10;\n' +
-'    for(var i2 = 0; i2 < bullets.length; i2++){\n' +
-'      ctx.fillRect(bullets[i2].x - 2, bullets[i2].y - 8, 4, 16);\n' +
-'    }\n' +
-'    ctx.shadowBlur = 0;\n' +
-'\n' +
-'    /* Enemies */\n' +
+'    ctx.fillStyle = "#67e8f9";\n' +
+'    for(var i2 = 0; i2 < bullets.length; i2++) ctx.fillRect(bullets[i2].x - 2, bullets[i2].y - 8, 4, 16);\n' +
+'    ctx.fillStyle = "#ec4899";\n' +
 '    for(var j2 = 0; j2 < enemies.length; j2++){\n' +
-'      var en2 = enemies[j2];\n' +
-'      ctx.fillStyle = "#ec4899"; ctx.shadowColor = "#db2777"; ctx.shadowBlur = 12;\n' +
-'      ctx.beginPath(); ctx.arc(en2.x, en2.y, en2.r, 0, 6.28); ctx.fill();\n' +
+'      ctx.beginPath(); ctx.arc(enemies[j2].x, enemies[j2].y, enemies[j2].r, 0, 6.28); ctx.fill();\n' +
 '    }\n' +
-'    ctx.shadowBlur = 0;\n' +
-'\n' +
-'    /* Player */\n' +
 '    if(running){\n' +
-'      ctx.fillStyle = "#a855f7"; ctx.shadowColor = "#c084fc"; ctx.shadowBlur = 16;\n' +
+'      ctx.fillStyle = "#a855f7";\n' +
 '      ctx.beginPath();\n' +
 '      ctx.moveTo(player.x, player.y - player.r * 1.4);\n' +
 '      ctx.lineTo(player.x + player.r, player.y + player.r);\n' +
 '      ctx.lineTo(player.x - player.r, player.y + player.r);\n' +
 '      ctx.closePath(); ctx.fill();\n' +
-'      ctx.shadowBlur = 0;\n' +
 '    }\n' +
-'\n' +
-'    /* Particles */\n' +
-'    for(var p2 = 0; p2 < particles.length; p2++){\n' +
-'      var pt2 = particles[p2];\n' +
-'      ctx.globalAlpha = Math.max(0, pt2.life / pt2.max);\n' +
-'      ctx.fillStyle = pt2.col;\n' +
-'      ctx.fillRect(pt2.x - 2, pt2.y - 2, 4, 4);\n' +
-'    }\n' +
-'    ctx.globalAlpha = 1;\n' +
 '    ctx.restore();\n' +
-'\n' +
 '    requestAnimationFrame(loop);\n' +
 '  }\n' +
 '  requestAnimationFrame(loop);\n' +
@@ -1259,7 +1138,6 @@ function buildMasterGame(prompt){
 '</html>';
 }
 
-/* ================= SANDBOX MANAGEMENT & NEW TAB SUPPORT ================= */
 function openSandbox(v){
   var sb = $('#sandbox');
   if(!sb) return;
@@ -1302,9 +1180,9 @@ function openInNewTab(){
     var url = URL.createObjectURL(blob);
     var win = window.open(url, '_blank');
     if(!win){
-      say('Popup blocked by browser — allow popups to open in a separate tab.', '#fcd34d');
+      say('Popup blocked by browser. Allow popups to open in a separate tab.', '#fcd34d');
     } else {
-      say('Game launched in separate full-screen browser tab!', '#86efac');
+      say('Game launched in separate full-screen browser tab.', '#86efac');
     }
   }catch(e){
     say('Failed to open tab: ' + e.message, '#fca5a5');
@@ -1331,17 +1209,6 @@ function showChip(v){
 }
 function setPhase(t){ var p = $('#phaseOut'); if(p) p.textContent = t; }
 
-/* ================= AUTONOMOUS ROLE ASSIGNMENT & FORGING ================= */
-function assignCouncilRoles(directive){
-  /* The Triad dynamically inspects what the game needs and assigns who takes what */
-  var roles = [
-    { id: 'ai1', role: 'Architecture & Mechanics', summary: 'Core physics, loop, player state machine' },
-    { id: 'ai2', role: 'Visuals & Audio Synthesizer', summary: 'Procedural canvas graphics, Web Audio SFX, particles' },
-    { id: 'ai3', role: 'Progression, HUD & ModAPI', summary: 'Enemy waves, scoring, touch controls, modding hooks' }
-  ];
-  return roles;
-}
-
 async function forge(){
   if(state.busy){
     if(runAbort) runAbort.abort();
@@ -1355,7 +1222,6 @@ async function forge(){
     return;
   }
 
-  /* CRITICAL REQUIREMENT: Text box MUST be empty after each prompt! */
   if(input){
     input.value = '';
     input.style.height = 'auto';
@@ -1366,9 +1232,8 @@ async function forge(){
   if(fb) fb.dataset.busy = '1'; if(fl) fl.textContent = 'ABORT';
   showChip(false); setPhase('Deliberating');
 
-  var roles = assignCouncilRoles(directive);
   say('Directive captured: "' + directive + '"', '#cfc7f2');
-  typeOut('Council deliberating roles: AI 1 (Engine) · AI 2 (Visuals/Audio) · AI 3 (Polish/ModAPI)', '#e9d5ff');
+  typeOut('Council deliberating roles: AI 1 (Engine) · AI 2 (Visuals/Audio) · AI 3 (Polish)', '#e9d5ff');
 
   var title = 'CUSTOM CONSTRUCT';
   var words = directive.replace(/[^a-zA-Z0-9 ]/g,'').split(/\s+/).slice(0, 3);
@@ -1376,29 +1241,17 @@ async function forge(){
   state.currentGameTitle = title;
   var gt = $('#sandboxGameTitle'); if(gt) gt.textContent = title;
 
-  /* Check live models */
   var liveModels = IDS.filter(function(id){ return slotMode(id) === 'live'; });
   var generatedHtml = '';
 
   if(liveModels.length > 0){
-    say('Engaging ' + liveModels.length + ' connected AI model(s) with 100% effort...', '#86efac');
+    say('Engaging ' + liveModels.length + ' connected AI model(s)...', '#86efac');
     setPhase('Forging with AI');
 
-    var systemMaster = 'You are part of Council3, an elite game development triad. You must put 100% effort into producing an astonishingly high-quality, polished, complete HTML5 game based on the user\'s prompt.\n\n' +
-      'RULES OF 100% EFFORT:\n' +
-      '1. NEVER output placeholders, stubs, "TODO", "// add more here", or truncated code.\n' +
-      '2. The game must be completely self-contained in a single HTML file with inline CSS and JS. Output ONLY the raw HTML starting with <!DOCTYPE html> and ending with </html>.\n' +
-      '3. Canvas-based graphics with fluid animations, particle systems, camera shakes, glow/lighting effects.\n' +
-      '4. Full sound effects generated procedurally using the Web Audio API (synthesized laser shots, jumps, explosions, coin chimes, hums, game over sounds).\n' +
-      '5. Complete gameplay loop: start title screen, gameplay mechanics, score/progress tracking, escalating challenge/waves/levels, win and lose game-over screens, instant restart with R, Space, or button.\n' +
-      '6. Responsive controls: Desktop (Arrow Keys, WASD, Mouse, Space) AND Touch/Mobile support with on-screen virtual buttons if touch is detected.\n' +
-      '7. Sleek HUD displaying score, health/lives, wave/level.\n' +
-      '8. Expose window.ModAPI with hooks (addScore, heal, godMode, setSpeed) for runtime modding.';
+    var systemMaster = 'You are part of Council3, an elite game development triad. Produce an astonishingly high-quality, polished, complete HTML5 game based on the user prompt.\n' +
+      'Rules: Single HTML file with inline CSS and JS. Output ONLY the raw HTML starting with <!DOCTYPE html> and ending with </html>.';
+    var userMaster = 'CREATE THE COMPLETE, FULLY PLAYABLE GAME FOR THIS EXACT DIRECTIVE:\n"' + directive + '"';
 
-    var userMaster = 'CREATE THE COMPLETE, FULLY PLAYABLE GAME FOR THIS EXACT DIRECTIVE:\n"' + directive + '"\n\n' +
-      'Put 100% effort into this. Deliver the complete, unabridged single-file HTML5 game with sound, particles, controls, and full polish now!';
-
-    /* Try calling live models */
     for(var i = 0; i < liveModels.length; i++){
       if(runAbort && runAbort.signal.aborted) break;
       var aid = liveModels[i];
@@ -1418,10 +1271,9 @@ async function forge(){
     }
   }
 
-  /* Fallback to Master Autonomous Synthesis Engine if no APIs or APIs failed */
   if(!generatedHtml || generatedHtml.length < 300){
-    say('Triad Synthesis Engine engaged: generating customized master construct...', '#c084fc');
-    setPhase('Triad Synthesis');
+    say('Triad Synthesis Engine engaged: generating local construct because no live API keys were active in the Matrix.', '#c084fc');
+    setPhase('Local Synthesis');
     await new Promise(function(r){ setTimeout(r, 600); });
     generatedHtml = buildMasterGame(directive);
   }
@@ -1432,7 +1284,6 @@ async function forge(){
   window.Council3Workspace.currentCodePayload = generatedHtml;
   window.Council3Workspace.currentProjectName = title;
 
-  /* Record creation locally and sync */
   try{
     var rec = {
       project_id: window.Council3Storage.makeId(),
@@ -1440,7 +1291,7 @@ async function forge(){
       prompt: directive,
       code: generatedHtml,
       score: 95,
-      pipeline: roles.map(function(r){ return { agent: AGENTS[r.id].name, role: r.role }; }),
+      pipeline: [{ agent: 'Triad', role: 'Construct' }],
       meta: { genre: title }
     };
     window.Council3Storage.captureWorkspace(rec);
@@ -1452,7 +1303,6 @@ async function forge(){
   say('Construct forged successfully! Ready to play.', '#86efac');
   typeOut('Complete: "' + title + '" is live in the Sandbox.', '#e9d5ff');
 
-  /* Auto-open sandbox so user can play immediately */
   openSandbox(true);
   endForge();
 }
@@ -1464,7 +1314,6 @@ function endForge(){
   if(fl) fl.textContent = 'INITIATE FORGING';
 }
 
-/* ================= PREVIOUS CREATIONS & CLOUD UI ================= */
 var gallery = { query: '', sort: 'recent', items: [] };
 
 function openCloud(v){
@@ -1656,7 +1505,6 @@ function initCloudUI(){
   try{ CS.bakeCredentials(BAKED_CLOUD.url,BAKED_CLOUD.anon); CS.autoInit(); }catch(e){}
 }
 
-/* ================= BINDINGS & BOOT ================= */
 function autoGrow(){
   if(!input) return;
   input.style.height = 'auto';
@@ -1673,22 +1521,19 @@ function bind(){
   on('#trayBtn','click',function(e){ e.stopPropagation(); var t=$('#tray'); openTray(t?!t.classList.contains('open'):true); });
   on('#trayClose','click',function(){ openTray(false); });
 
-  /* SANDBOX TRIGGERS: Always work reliably */
   on('#sandboxBtn','click',function(e){ e.stopPropagation(); openSandbox(true); });
   on('#readyChip','click',function(e){ e.stopPropagation(); openSandbox(true); });
   on('#sandboxClose','click',function(){ openSandbox(false); });
   on('#sandboxBackBtn','click',function(){ openSandbox(false); });
 
-  /* NEW TAB BUTTON: Launches game in dedicated browser tab */
   on('#openNewTabBtn','click',function(){ openInNewTab(); });
+  on('#topNewTabBtn','click',function(){ openInNewTab(); });
 
-  /* RESTART GAME BUTTON */
   on('#sandboxRestartBtn','click',function(){
     say('Restarting game...', '#c084fc');
     loadCurrentCodeToPreview();
   });
 
-  /* CODE DRAWER TOGGLE */
   on('#codeToggle','click',function(){
     var w = $('#codeWrap');
     if(!w) return;
@@ -1715,7 +1560,6 @@ function bind(){
     say('Downloaded game HTML file.', '#86efac');
   });
 
-  /* FORGE INITIATION */
   on('#forgeBtn','click',function(){ forge(); });
   on('#prompt','keydown',function(e){
     if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
@@ -1754,19 +1598,17 @@ function boot(){
   try{ buildRails(); }catch(e){}
   try{ buildTray(); }catch(e){}
 
-  /* GUARANTEED BLANK INPUT ON BOOT */
   if(input){
     input.value = '';
     autoGrow();
   }
 
-  /* Pre-populate code with blank slate until user creates a game */
   state.currentCode = buildMasterGame('ASTRAL ARCADE');
   if(editor) editor.value = state.currentCode;
 
   icons();
-  try{ bind(); }catch(e){ console.error('Bind err', e); }
-  try{ initCloudUI(); }catch(e){ console.error('Cloud err', e); }
+  try{ bind(); }catch(e){}
+  try{ initCloudUI(); }catch(e){}
 
   requestAnimationFrame(frame);
   setTimeout(function(){
